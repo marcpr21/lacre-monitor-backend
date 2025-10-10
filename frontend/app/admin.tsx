@@ -251,16 +251,54 @@ export default function Admin() {
           >
             <Ionicons name="people" size={24} color="#007AFF" />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => setShowFilters(!showFilters)}
-          >
-            <Ionicons name="filter" size={24} color="#007AFF" />
-          </TouchableOpacity>
+          {activeTab === 'photos' && (
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setShowFilters(!showFilters)}
+            >
+              <Ionicons name="filter" size={24} color="#007AFF" />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
           </TouchableOpacity>
         </View>
+      </View>
+
+      {/* Tab Navigation */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'photos' && styles.activeTab]}
+          onPress={() => setActiveTab('photos')}
+        >
+          <Ionicons 
+            name="images" 
+            size={20} 
+            color={activeTab === 'photos' ? '#007AFF' : '#666'} 
+          />
+          <Text style={[
+            styles.tabText, 
+            activeTab === 'photos' && styles.activeTabText
+          ]}>
+            Fotos
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'compliance' && styles.activeTab]}
+          onPress={() => setActiveTab('compliance')}
+        >
+          <Ionicons 
+            name="analytics" 
+            size={20} 
+            color={activeTab === 'compliance' ? '#007AFF' : '#666'} 
+          />
+          <Text style={[
+            styles.tabText, 
+            activeTab === 'compliance' && styles.activeTabText
+          ]}>
+            Conformidade
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {showFilters && (
