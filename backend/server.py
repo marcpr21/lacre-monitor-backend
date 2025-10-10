@@ -359,32 +359,34 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
             )
     
     # DELETE OLD PHOTOS before saving new one (only same specific photo)
-    delete_query = {
-        "employee_id": current_user["id"],
-        "photo_type": photo.photo_type
-    }
-    
-    # For lacre photos, delete ONLY old photos of SAME location and seal number
-    # This allows multiple lacres (different numbers/locations) to coexist
-    if photo.photo_type == "lacre":
-        if photo.seal_location_id and photo.seal_number:
-            # Only delete if same location AND same seal number
-            delete_query["seal_location_id"] = photo.seal_location_id
-            delete_query["seal_number"] = photo.seal_number
-        else:
-            # If no location info, don't delete anything (allow multiple photos)
-            delete_query = None
-    
-    # For medidor photos, delete ONLY old photos of SAME period (morning OR afternoon)
-    # This allows morning AND afternoon photos to coexist
-    elif photo.photo_type == "medidor":
-        delete_query["period_code"] = schedule_check["period_code"]
-    
-    # Delete old photos matching criteria (if any)
-    if delete_query:
-        delete_result = await db.photos.delete_many(delete_query)
-        if delete_result.deleted_count > 0:
-            print(f"🗑️ Deleted {delete_result.deleted_count} old photo(s) before saving new one")
+    # SKIP DELETION FOR TEST USER - allow unlimited photos for testing
+    if current_user["username"].lower() != "teste":
+        delete_query = {
+            "employee_id": current_user["id"],
+            "photo_type": photo.photo_type
+        }
+        
+        # For lacre photos, delete ONLY old photos of SAME location and seal number
+        # This allows multiple lacres (different numbers/locations) to coexist
+        if photo.photo_type == "lacre":
+            if photo.seal_location_id and photo.seal_number:
+                # Only delete if same location AND same seal number
+                delete_query["seal_location_id"] = photo.seal_location_id
+                delete_query["seal_number"] = photo.seal_number
+            else:
+                # If no location info, don't delete anything (allow multiple photos)
+                delete_query = None
+        
+        # For medidor photos, delete ONLY old photos of SAME period (morning OR afternoon)
+        # This allows morning AND afternoon photos to coexist
+        elif photo.photo_type == "medidor":
+            delete_query["period_code"] = schedule_check["period_code"]
+        
+        # Delete old photos matching criteria (if any)
+        if delete_query:
+            delete_result = await db.photos.delete_many(delete_query)
+            if delete_result.deleted_count > 0:
+                print(f"🗑️ Deleted {delete_result.deleted_count} old photo(s) before saving new one")
     
     photo_id = str(uuid.uuid4())
     
