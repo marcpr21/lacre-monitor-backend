@@ -697,7 +697,7 @@ export default function Admin() {
                 <Text style={styles.loadingText}>Carregando relatório...</Text>
               </View>
             ) : (
-              complianceData.map((employee) => {
+              complianceData && Array.isArray(complianceData) && complianceData.map((employee) => {
                 const isExpanded = expandedCompliance.has(employee.employee_id);
                 const getComplianceColor = (compliance: number) => {
                   if (compliance >= 90) return '#4CAF50';
