@@ -64,6 +64,7 @@ interface ComplianceReport {
 
 export default function Admin() {
   const { user, logout } = useAuthStore();
+  const insets = useSafeAreaInsets();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [refreshing, setRefreshing] = useState(false);
