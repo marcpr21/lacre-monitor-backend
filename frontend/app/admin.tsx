@@ -486,6 +486,7 @@ export default function Admin() {
               }
               employeeGroups[employeeKey].push(photo);
             });
+            }
 
             // Sort employees by name
             const sortedEmployees = Object.keys(employeeGroups).sort((a, b) => {
