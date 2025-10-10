@@ -13,10 +13,7 @@ Notifications.setNotificationHandler({
 });
 
 export default function RootLayout() {
-  const { initAuth } = useAuthStore();
-
   useEffect(() => {
-    initAuth();
     requestNotificationPermissions();
   }, []);
 
@@ -28,13 +25,13 @@ export default function RootLayout() {
   };
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="home" />
-      <Stack.Screen name="camera" />
-      <Stack.Screen name="admin" />
-      <Stack.Screen name="users" />
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="home" options={{ headerShown: false }} />
+      <Stack.Screen name="camera" options={{ headerShown: false }} />
+      <Stack.Screen name="admin" options={{ headerShown: false }} />
+      <Stack.Screen name="users" options={{ headerShown: false }} />
     </Stack>
   );
 }
