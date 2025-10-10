@@ -141,7 +141,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 def check_photo_schedule(photo_type: str) -> dict:
     """Check if photo can be taken at current time and return schedule info"""
-    now = datetime.now()
+    now = get_brazil_time()  # Use Brazil timezone (UTC-3)
     weekday = now.weekday()  # 0=Monday, 6=Sunday
     hour = now.hour
     minute = now.minute
