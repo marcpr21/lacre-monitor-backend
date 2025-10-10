@@ -347,6 +347,26 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
                 detail=f"Você já enviou a foto do medidor do período da {period_name} hoje"
             )
     
+    # DELETE OLD PHOTOS before saving new one
+    delete_query = {
+        "employee_id": current_user["id"],
+        "photo_type": photo.photo_type
+    }
+    
+    # For lacre photos, delete old photos of same location and seal number
+    if photo.photo_type == "lacre" and photo.seal_location_id and photo.seal_number:
+        delete_query["seal_location_id"] = photo.seal_location_id
+        delete_query["seal_number"] = photo.seal_number
+    
+    # For medidor photos, delete old photos of same period (morning/afternoon)
+    if photo.photo_type == "medidor":
+        delete_query["period_code"] = schedule_check["period_code"]
+    
+    # Delete old photos matching criteria
+    delete_result = await db.photos.delete_many(delete_query)
+    if delete_result.deleted_count > 0:
+        print(f"🗑️ Deleted {delete_result.deleted_count} old photo(s) before saving new one")
+    
     photo_id = str(uuid.uuid4())
     
     # Get seal location name if applicable
