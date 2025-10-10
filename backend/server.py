@@ -125,25 +125,28 @@ def check_photo_schedule(photo_type: str) -> dict:
             return {
                 "allowed": False,
                 "message": "Fotos de lacre só podem ser tiradas em Segunda, Quarta e Sexta",
-                "period": ""
+                "period": "",
+                "period_code": ""
             }
         
         if current_time > 12 * 60:  # After 12:00 PM
             return {
                 "allowed": False,
                 "message": "Fotos de lacre devem ser tiradas até 12:00",
-                "period": ""
+                "period": "",
+                "period_code": ""
             }
         
         day_names = {0: "Segunda", 2: "Quarta", 4: "Sexta"}
         return {
             "allowed": True,
             "message": "Horário válido",
-            "period": f"{day_names[weekday]} até 12:00"
+            "period": f"{day_names[weekday]} até 12:00",
+            "period_code": f"lacre_{weekday}"
         }
     
     elif photo_type == "medidor":
-        # Daily, twice: 06:00-09:00 and 17:00-18:00
+        # Daily, twice: 06:00-09:00 (morning) and 17:00-18:00 (afternoon)
         morning_start = 6 * 60  # 06:00
         morning_end = 9 * 60    # 09:00
         evening_start = 17 * 60 # 17:00
@@ -153,22 +156,25 @@ def check_photo_schedule(photo_type: str) -> dict:
             return {
                 "allowed": True,
                 "message": "Horário válido - Período manhã",
-                "period": "Manhã 06:00-09:00"
+                "period": "Manhã 06:00-09:00",
+                "period_code": "medidor_manha"
             }
         elif evening_start <= current_time <= evening_end:
             return {
                 "allowed": True,
                 "message": "Horário válido - Período tarde",
-                "period": "Tarde 17:00-18:00"
+                "period": "Tarde 17:00-18:00",
+                "period_code": "medidor_tarde"
             }
         else:
             return {
                 "allowed": False,
-                "message": "Fotos de medidor devem ser tiradas entre 06:00-09:00 ou 17:00-18:00",
-                "period": ""
+                "message": "Fotos de medidor devem ser tiradas entre 06:00-09:00 (manhã) ou 17:00-18:00 (tarde)",
+                "period": "",
+                "period_code": ""
             }
     
-    return {"allowed": False, "message": "Tipo de foto inválido", "period": ""}
+    return {"allowed": False, "message": "Tipo de foto inválido", "period": "", "period_code": ""}
 
 # ==================== ROUTES ====================
 
