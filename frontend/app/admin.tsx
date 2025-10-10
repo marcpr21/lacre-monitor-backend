@@ -451,9 +451,10 @@ export default function Admin() {
                                 )}
                               </View>
                             </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
+                            ))}
+                          </View>
+                        );
+                      })()}
 
                       {/* Medidor Photos - Only show if employee is expanded */}
                       {isEmployeeExpanded && medidorPhotos.length > 0 && (
