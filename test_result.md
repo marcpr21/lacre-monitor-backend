@@ -191,15 +191,18 @@ backend:
 
   - task: "Compliance Report API"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Compliance report API endpoint /api/analytics/missing-photos already exists in backend. Provides detailed analysis of missing lacre and medidor photos by employee, includes compliance percentages and missing dates. Needs testing to verify functionality."
+        - working: true
+          agent: "testing"
+          comment: "Compliance report API endpoint /api/analytics/missing-photos fully tested and working correctly. ✅ Admin authentication (admin/admin123) successful. ✅ Employee access properly denied with 403 status (joao/123456). ✅ Different days_back parameters (7, 30, 90) working correctly. ✅ Response structure validated - includes report array, period_days, generated_at. ✅ Employee records contain all required fields: employee_id, employee_name, missing_lacres, missing_medidor, compliance percentages. ✅ Missing photos have correct structure with date, date_formatted, weekday, period. ✅ 'teste' user correctly excluded from compliance analysis. API returns comprehensive compliance data for all employees with detailed missing photo analysis and compliance percentages."
 
   - task: "API Root and Health"
     implemented: true
