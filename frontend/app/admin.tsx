@@ -75,6 +75,13 @@ export default function Admin() {
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set());
   const [expandedPhotoTypes, setExpandedPhotoTypes] = useState<Set<string>>(new Set());
+  
+  // New state for compliance report
+  const [activeTab, setActiveTab] = useState<'photos' | 'compliance'>('photos');
+  const [complianceData, setComplianceData] = useState<ComplianceReport[]>([]);
+  const [complianceLoading, setComplianceLoading] = useState(false);
+  const [compliancePeriod, setCompliancePeriod] = useState(30);
+  const [expandedCompliance, setExpandedCompliance] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user?.role !== 'admin') {
