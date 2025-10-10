@@ -503,9 +503,10 @@ export default function Admin() {
                                 )}
                               </View>
                             </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
+                            ))}
+                          </View>
+                        );
+                      })()}
                     </View>
                   );
                 })}
