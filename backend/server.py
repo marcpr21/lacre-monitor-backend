@@ -377,6 +377,136 @@ async def get_employees(current_user = Depends(get_current_user)):
         for e in employees
     ]
 
+# Get all users (for admin)
+@api_router.get("/users/all", response_model=List[UserResponse])
+async def get_all_users(current_user = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    users = await db.users.find({}).to_list(1000)
+    
+    return [
+        UserResponse(
+            id=u["id"],
+            username=u["username"],
+            name=u["name"],
+            role=u["role"]
+        )
+        for u in users
+    ]
+
+# Create user (admin only)
+@api_router.post("/users/create", response_model=UserResponse)
+async def create_user(user: UserCreate, current_user = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if username exists
+    existing = await db.users.find_one({"username": user.username})
+    if existing:
+        raise HTTPException(status_code=400, detail="Nome de usuário já existe")
+    
+    user_id = str(uuid.uuid4())
+    hashed_pw = hash_password(user.password)
+    
+    user_doc = {
+        "id": user_id,
+        "username": user.username,
+        "password": hashed_pw,
+        "name": user.name,
+        "role": user.role,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    return UserResponse(
+        id=user_id,
+        username=user.username,
+        name=user.name,
+        role=user.role
+    )
+
+# Update user (admin only)
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    username: Optional[str] = None
+    role: Optional[str] = None
+
+@api_router.put("/users/{user_id}", response_model=UserResponse)
+async def update_user(user_id: str, updates: UserUpdate, current_user = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    # Check if new username already exists
+    if updates.username and updates.username != user["username"]:
+        existing = await db.users.find_one({"username": updates.username})
+        if existing:
+            raise HTTPException(status_code=400, detail="Nome de usuário já existe")
+    
+    update_data = {}
+    if updates.name:
+        update_data["name"] = updates.name
+    if updates.username:
+        update_data["username"] = updates.username
+    if updates.role:
+        update_data["role"] = updates.role
+    
+    if update_data:
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+        user.update(update_data)
+    
+    return UserResponse(
+        id=user["id"],
+        username=user["username"],
+        name=user["name"],
+        role=user["role"]
+    )
+
+# Reset password (admin only)
+class PasswordReset(BaseModel):
+    new_password: str
+
+@api_router.put("/users/{user_id}/reset-password")
+async def reset_password(user_id: str, reset_data: PasswordReset, current_user = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    hashed_pw = hash_password(reset_data.new_password)
+    await db.users.update_one({"id": user_id}, {"$set": {"password": hashed_pw}})
+    
+    return {"success": True, "message": "Senha alterada com sucesso"}
+
+# Delete user (admin only)
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, current_user = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Cannot delete yourself
+    if user_id == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Você não pode deletar sua própria conta")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    # Delete user's photos
+    await db.photos.delete_many({"employee_id": user_id})
+    
+    # Delete user
+    await db.users.delete_one({"id": user_id})
+    
+    return {"success": True, "message": "Usuário deletado com sucesso"}
+
 # Cleanup expired photos (can be called by cron job)
 @api_router.post("/photos/cleanup")
 async def cleanup_expired_photos(current_user = Depends(get_current_user)):
