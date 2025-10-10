@@ -104,6 +104,10 @@ class SealLocationUpdate(BaseModel):
 
 # ==================== HELPER FUNCTIONS ====================
 
+def get_brazil_time() -> datetime:
+    """Get current time in Brazil timezone (America/Sao_Paulo = UTC-3)"""
+    return datetime.now(ZoneInfo("America/Sao_Paulo"))
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
