@@ -405,17 +405,30 @@ export default function Admin() {
                       </TouchableOpacity>
 
                       {/* Lacre Photos - Only show if employee is expanded */}
-                      {isEmployeeExpanded && lacrePhotos.length > 0 && (
-                        <View style={styles.typeSection}>
-                          <View style={styles.typeSectionHeader}>
-                            <Ionicons name="lock-closed" size={16} color="#FF6B6B" />
-                            <Text style={styles.typeSectionTitle}>Lacres</Text>
-                            <View style={[styles.typeCountBadge, { backgroundColor: '#FF6B6B' }]}>
-                              <Text style={styles.typeCountText}>{lacrePhotos.length}</Text>
-                            </View>
-                          </View>
+                      {isEmployeeExpanded && lacrePhotos.length > 0 && (() => {
+                        const lacreKey = `${employeeKey}-lacre`;
+                        const isLacreExpanded = expandedPhotoTypes.has(lacreKey);
 
-                          {lacrePhotos.map((photo) => (
+                        return (
+                          <View style={styles.typeSection}>
+                            <TouchableOpacity 
+                              style={styles.typeSectionHeader}
+                              onPress={() => togglePhotoTypeExpansion(lacreKey)}
+                              activeOpacity={0.7}
+                            >
+                              <Ionicons name="lock-closed" size={16} color="#FF6B6B" />
+                              <Text style={styles.typeSectionTitle}>Lacres</Text>
+                              <View style={[styles.typeCountBadge, { backgroundColor: '#FF6B6B' }]}>
+                                <Text style={styles.typeCountText}>{lacrePhotos.length}</Text>
+                              </View>
+                              <Ionicons 
+                                name={isLacreExpanded ? "chevron-up" : "chevron-down"} 
+                                size={18} 
+                                color="#FF6B6B" 
+                              />
+                            </TouchableOpacity>
+
+                            {isLacreExpanded && lacrePhotos.map((photo) => (
                             <TouchableOpacity
                               key={photo.id}
                               style={styles.photoCard}
