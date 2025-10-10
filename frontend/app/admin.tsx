@@ -774,7 +774,7 @@ export default function Admin() {
                                   • {missing.date_formatted} - {missing.period} ({missing.weekday})
                                 </Text>
                               ))}
-                              {employee.missing_medidor.length > 5 && (
+                              {employee.missing_medidor && employee.missing_medidor.length > 5 && (
                                 <Text style={styles.moreItems}>
                                   +{employee.missing_medidor.length - 5} mais...
                                 </Text>
