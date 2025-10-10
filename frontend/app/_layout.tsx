@@ -36,6 +36,7 @@ export default function RootLayout() {
         <Stack.Screen name="home" />
         <Stack.Screen name="camera" />
         <Stack.Screen name="admin" />
+        <Stack.Screen name="users" />
       </Stack>
     </View>
   );
