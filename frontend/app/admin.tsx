@@ -767,7 +767,7 @@ export default function Admin() {
                               <Text style={styles.complianceBadgeText}>{employee.medidor_compliance}%</Text>
                             </View>
                           </View>
-                          {employee.missing_medidor.length > 0 ? (
+                          {employee.missing_medidor && Array.isArray(employee.missing_medidor) && employee.missing_medidor.length > 0 ? (
                             <View style={styles.missingList}>
                               {employee.missing_medidor.slice(0, 5).map((missing, index) => (
                                 <Text key={index} style={styles.missingItem}>
