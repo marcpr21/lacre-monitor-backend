@@ -431,6 +431,15 @@ export default function Admin() {
             <Text style={styles.photoCount}>Total: {photos?.length || 0} fotos</Text>
 
         {(() => {
+          if (!photos || !Array.isArray(photos) || photos.length === 0) {
+            return (
+              <View style={styles.emptyState}>
+                <Ionicons name="images-outline" size={64} color="#ccc" />
+                <Text style={styles.emptyText}>Nenhuma foto encontrada</Text>
+              </View>
+            );
+          }
+
           // Group photos by date
           const groupedPhotos: { [key: string]: Photo[] } = {};
           
