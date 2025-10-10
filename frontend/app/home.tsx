@@ -110,23 +110,30 @@ export default function Home() {
       color: '#FF6B6B',
     });
 
-    // Check Medidor schedule
+    // Check Medidor schedule - Morning and Afternoon separately
     const isMorning = hour >= 6 && hour < 9;
     const isEvening = hour >= 17 && hour < 18;
-    const isMedidorTime = isMorning || isEvening;
 
+    // Morning medidor
     scheduleData.push({
       type: 'medidor',
-      title: 'Foto do Medidor',
-      description: 'Diário: 06:00-09:00 e 17:00-18:00',
-      allowed: isMedidorTime,
-      message: isMedidorTime
-        ? isMorning
-          ? 'Período manhã - Disponível!'
-          : 'Período tarde - Disponível!'
-        : 'Fora do horário',
-      icon: 'speedometer',
-      color: '#4ECDC4',
+      title: 'Medidor - Manhã',
+      description: '06:00-09:00',
+      allowed: isMorning,
+      message: isMorning ? 'Disponível agora!' : 'Período: 06:00-09:00',
+      icon: 'sunny',
+      color: '#FFA726',
+    });
+
+    // Afternoon medidor
+    scheduleData.push({
+      type: 'medidor',
+      title: 'Medidor - Tarde',
+      description: '17:00-18:00',
+      allowed: isEvening,
+      message: isEvening ? 'Disponível agora!' : 'Período: 17:00-18:00',
+      icon: 'moon',
+      color: '#5C6BC0',
     });
 
     setSchedules(scheduleData);
