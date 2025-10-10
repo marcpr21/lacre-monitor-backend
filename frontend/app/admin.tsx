@@ -433,7 +433,16 @@ export default function Admin() {
       >
         {activeTab === 'photos' ? (
           <>
-            <Text style={styles.photoCount}>Total: {photos?.length || 0} fotos</Text>
+            <View style={styles.photoCountContainer}>
+              <Text style={styles.photoCount}>Total: {photos?.length || 0} fotos</Text>
+              <TouchableOpacity 
+                style={styles.refreshButton} 
+                onPress={() => loadData()}
+              >
+                <Ionicons name="refresh" size={20} color="#007AFF" />
+                <Text style={styles.refreshText}>Atualizar</Text>
+              </TouchableOpacity>
+            </View>
 
         {(() => {
           if (!photos || !Array.isArray(photos) || photos.length === 0) {
