@@ -542,6 +542,142 @@ async def cleanup_expired_photos(current_user = Depends(get_current_user)):
         "message": f"{result.deleted_count} fotos expiradas foram deletadas"
     }
 
+# ==================== SEAL LOCATIONS ENDPOINTS ====================
+
+# Get all seal locations
+@api_router.get("/seal-locations", response_model=List[SealLocation])
+async def get_seal_locations(current_user = Depends(get_current_user)):
+    locations = await db.seal_locations.find({}).to_list(1000)
+    
+    return [
+        SealLocation(
+            id=loc["id"],
+            name=loc["name"],
+            seal_count=loc["seal_count"],
+            description=loc.get("description"),
+            created_at=loc["created_at"]
+        )
+        for loc in locations
+    ]
+
+# Create seal location (admin only)
+@api_router.post("/seal-locations", response_model=SealLocation)
+async def create_seal_location(location: SealLocationCreate, current_user = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if location name exists
+    existing = await db.seal_locations.find_one({"name": location.name})
+    if existing:
+        raise HTTPException(status_code=400, detail="Já existe um local com este nome")
+    
+    location_id = str(uuid.uuid4())
+    
+    location_doc = {
+        "id": location_id,
+        "name": location.name,
+        "seal_count": location.seal_count,
+        "description": location.description,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.seal_locations.insert_one(location_doc)
+    
+    return SealLocation(**location_doc)
+
+# Update seal location (admin only)
+@api_router.put("/seal-locations/{location_id}", response_model=SealLocation)
+async def update_seal_location(
+    location_id: str, 
+    updates: SealLocationUpdate, 
+    current_user = Depends(get_current_user)
+):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    location = await db.seal_locations.find_one({"id": location_id})
+    if not location:
+        raise HTTPException(status_code=404, detail="Local não encontrado")
+    
+    # Check if new name already exists
+    if updates.name and updates.name != location["name"]:
+        existing = await db.seal_locations.find_one({"name": updates.name})
+        if existing:
+            raise HTTPException(status_code=400, detail="Já existe um local com este nome")
+    
+    update_data = {}
+    if updates.name:
+        update_data["name"] = updates.name
+    if updates.seal_count is not None:
+        update_data["seal_count"] = updates.seal_count
+    if updates.description is not None:
+        update_data["description"] = updates.description
+    
+    if update_data:
+        await db.seal_locations.update_one({"id": location_id}, {"$set": update_data})
+        location.update(update_data)
+    
+    return SealLocation(
+        id=location["id"],
+        name=location["name"],
+        seal_count=location["seal_count"],
+        description=location.get("description"),
+        created_at=location["created_at"]
+    )
+
+# Delete seal location (admin only)
+@api_router.delete("/seal-locations/{location_id}")
+async def delete_seal_location(location_id: str, current_user = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    location = await db.seal_locations.find_one({"id": location_id})
+    if not location:
+        raise HTTPException(status_code=404, detail="Local não encontrado")
+    
+    # Delete all photos from this location
+    await db.photos.delete_many({"seal_location_id": location_id})
+    
+    # Delete location
+    await db.seal_locations.delete_one({"id": location_id})
+    
+    return {"success": True, "message": "Local deletado com sucesso"}
+
+# Get seal photo progress for today
+@api_router.get("/seal-locations/progress/today")
+async def get_seal_progress_today(current_user = Depends(get_current_user)):
+    # Get all locations
+    locations = await db.seal_locations.find({}).to_list(1000)
+    
+    # Get today's start and end
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start + timedelta(days=1)
+    
+    progress = []
+    
+    for loc in locations:
+        # Count photos taken today for this location by current user
+        photo_count = await db.photos.count_documents({
+            "employee_id": current_user["id"],
+            "photo_type": "lacre",
+            "seal_location_id": loc["id"],
+            "timestamp": {
+                "$gte": today_start,
+                "$lt": today_end
+            }
+        })
+        
+        progress.append({
+            "location_id": loc["id"],
+            "location_name": loc["name"],
+            "total_seals": loc["seal_count"],
+            "photographed": photo_count,
+            "remaining": max(0, loc["seal_count"] - photo_count),
+            "completed": photo_count >= loc["seal_count"]
+        })
+    
+    return progress
+
 # Include the router in the main app
 app.include_router(api_router)
 
