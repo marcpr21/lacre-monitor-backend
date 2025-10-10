@@ -823,12 +823,33 @@ export default function Admin() {
           </View>
 
           {selectedPhoto && (
-            <ScrollView style={styles.modalContent}>
-              <Image
-                source={{ uri: selectedPhoto.image_base64 }}
-                style={styles.fullImage}
-                resizeMode="contain"
-              />
+            <ScrollView 
+              style={styles.modalContent}
+              maximumZoomScale={3}
+              minimumZoomScale={1}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
+              <TouchableOpacity 
+                activeOpacity={1}
+                onPress={() => setImageZoomed(!imageZoomed)}
+                style={styles.imageContainer}
+              >
+                <Image
+                  source={{ uri: selectedPhoto.image_base64 }}
+                  style={[
+                    styles.fullImage, 
+                    imageZoomed && styles.zoomedImage
+                  ]}
+                  resizeMode={imageZoomed ? "contain" : "contain"}
+                />
+                {!imageZoomed && (
+                  <View style={styles.zoomIndicator}>
+                    <Ionicons name="expand" size={24} color="#FFF" />
+                    <Text style={styles.zoomText}>Toque para ampliar</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
 
               <View style={styles.detailsContainer}>
                 <View style={styles.detailRow}>
