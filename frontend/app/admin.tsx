@@ -52,6 +52,7 @@ export default function Admin() {
   const [showFilters, setShowFilters] = useState(false);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set());
+  const [expandedPhotoTypes, setExpandedPhotoTypes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user?.role !== 'admin') {
