@@ -621,6 +621,143 @@ export default function Admin() {
             );
           });
         })()}
+          </>
+        ) : (
+          // Compliance Report Content
+          <>
+            <View style={styles.complianceHeader}>
+              <Text style={styles.complianceTitle}>Relatório de Conformidade</Text>
+              <Text style={styles.complianceSubtitle}>Últimos {compliancePeriod} dias</Text>
+              
+              {/* Period Selector */}
+              <View style={styles.periodSelector}>
+                <TouchableOpacity
+                  style={[styles.periodButton, compliancePeriod === 7 && styles.periodButtonActive]}
+                  onPress={() => setCompliancePeriod(7)}
+                >
+                  <Text style={[styles.periodButtonText, compliancePeriod === 7 && styles.periodButtonTextActive]}>
+                    7 dias
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.periodButton, compliancePeriod === 30 && styles.periodButtonActive]}
+                  onPress={() => setCompliancePeriod(30)}
+                >
+                  <Text style={[styles.periodButtonText, compliancePeriod === 30 && styles.periodButtonTextActive]}>
+                    30 dias
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.periodButton, compliancePeriod === 90 && styles.periodButtonActive]}
+                  onPress={() => setCompliancePeriod(90)}
+                >
+                  <Text style={[styles.periodButtonText, compliancePeriod === 90 && styles.periodButtonTextActive]}>
+                    90 dias
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {complianceLoading ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Carregando relatório...</Text>
+              </View>
+            ) : (
+              complianceData.map((employee) => {
+                const isExpanded = expandedCompliance.has(employee.employee_id);
+                const getComplianceColor = (compliance: number) => {
+                  if (compliance >= 90) return '#4CAF50';
+                  if (compliance >= 70) return '#FF9800';
+                  return '#F44336';
+                };
+
+                return (
+                  <View key={employee.employee_id} style={styles.complianceCard}>
+                    <TouchableOpacity
+                      style={styles.complianceCardHeader}
+                      onPress={() => toggleComplianceExpansion(employee.employee_id)}
+                    >
+                      <View style={styles.complianceEmployeeInfo}>
+                        <Text style={styles.complianceEmployeeName}>{employee.employee_name}</Text>
+                        <View style={styles.complianceStats}>
+                          <View style={[styles.complianceBadge, { backgroundColor: getComplianceColor(employee.overall_compliance) }]}>
+                            <Text style={styles.complianceBadgeText}>{employee.overall_compliance}%</Text>
+                          </View>
+                          <Text style={styles.complianceMissing}>
+                            {employee.total_missing} foto{employee.total_missing !== 1 ? 's' : ''} perdida{employee.total_missing !== 1 ? 's' : ''}
+                          </Text>
+                        </View>
+                      </View>
+                      <Ionicons
+                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                        size={24}
+                        color="#666"
+                      />
+                    </TouchableOpacity>
+
+                    {isExpanded && (
+                      <View style={styles.complianceDetails}>
+                        {/* Lacres Section */}
+                        <View style={styles.complianceSection}>
+                          <View style={styles.complianceSectionHeader}>
+                            <Ionicons name="lock-closed" size={16} color="#FF6B6B" />
+                            <Text style={styles.complianceSectionTitle}>Lacres</Text>
+                            <View style={[styles.complianceBadge, { backgroundColor: getComplianceColor(employee.lacre_compliance) }]}>
+                              <Text style={styles.complianceBadgeText}>{employee.lacre_compliance}%</Text>
+                            </View>
+                          </View>
+                          {employee.missing_lacres.length > 0 ? (
+                            <View style={styles.missingList}>
+                              {employee.missing_lacres.slice(0, 5).map((missing, index) => (
+                                <Text key={index} style={styles.missingItem}>
+                                  • {missing.date_formatted} ({missing.weekday})
+                                </Text>
+                              ))}
+                              {employee.missing_lacres.length > 5 && (
+                                <Text style={styles.moreItems}>
+                                  +{employee.missing_lacres.length - 5} mais...
+                                </Text>
+                              )}
+                            </View>
+                          ) : (
+                            <Text style={styles.noMissing}>✅ Todas as fotos em dia</Text>
+                          )}
+                        </View>
+
+                        {/* Medidor Section */}
+                        <View style={styles.complianceSection}>
+                          <View style={styles.complianceSectionHeader}>
+                            <Ionicons name="speedometer" size={16} color="#4ECDC4" />
+                            <Text style={styles.complianceSectionTitle}>Medidor</Text>
+                            <View style={[styles.complianceBadge, { backgroundColor: getComplianceColor(employee.medidor_compliance) }]}>
+                              <Text style={styles.complianceBadgeText}>{employee.medidor_compliance}%</Text>
+                            </View>
+                          </View>
+                          {employee.missing_medidor.length > 0 ? (
+                            <View style={styles.missingList}>
+                              {employee.missing_medidor.slice(0, 5).map((missing, index) => (
+                                <Text key={index} style={styles.missingItem}>
+                                  • {missing.date_formatted} - {missing.period} ({missing.weekday})
+                                </Text>
+                              ))}
+                              {employee.missing_medidor.length > 5 && (
+                                <Text style={styles.moreItems}>
+                                  +{employee.missing_medidor.length - 5} mais...
+                                </Text>
+                              )}
+                            </View>
+                          ) : (
+                            <Text style={styles.noMissing}>✅ Todas as fotos em dia</Text>
+                          )}
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </>
+        )}
       </ScrollView>
 
       {/* Photo Details Modal */}
