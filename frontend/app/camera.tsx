@@ -126,12 +126,30 @@ export default function Camera() {
       }
 
       const token = await getAuthToken();
+      const userStr = await AsyncStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+
+      if (!user) {
+        Alert.alert('Erro', 'Usuário não encontrado. Faça login novamente.');
+        router.replace('/login');
+        return;
+      }
+
+      // Truncar imagem se muito grande (para evitar crash)
+      let imageToSend = capturedPhoto;
+      if (capturedPhoto.length > 2000000) { // 2MB
+        // Reduzir qualidade da imagem
+        const base64Data = capturedPhoto.replace(/^data:image\/[a-z]+;base64,/, '');
+        const truncated = base64Data.substring(0, 1500000); // 1.5MB
+        imageToSend = `data:image/jpeg;base64,${truncated}`;
+      }
 
       await axios.post(
         `${API_URL}/api/photos/submit`,
         {
+          employee_id: user.id,
           photo_type: type,
-          image_base64: capturedPhoto,
+          image_base64: imageToSend,
           latitude: location?.latitude,
           longitude: location?.longitude,
           location_name: locationName,
@@ -140,6 +158,7 @@ export default function Camera() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 30000, // 30 segundos timeout
         }
       );
 
