@@ -649,6 +649,119 @@ async def cleanup_expired_photos(current_user = Depends(get_current_user)):
         "message": f"{result.deleted_count} fotos expiradas foram deletadas"
     }
 
+# ==================== ANALYTICS/COMPLIANCE ENDPOINTS ====================
+
+@api_router.get("/analytics/missing-photos")
+async def get_missing_photos_report(
+    current_user = Depends(get_current_user),
+    days_back: int = 30
+):
+    """Get report of missing photos for all employees"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get all employees (excluding test user)
+    employees = await db.users.find({
+        "role": "employee",
+        "username": {"$ne": "teste"}
+    }).to_list(100)
+    
+    now = get_brazil_time()
+    report = []
+    
+    for employee in employees:
+        employee_id = employee["id"]
+        employee_name = employee["name"]
+        
+        missing_lacres = []
+        missing_medidor = []
+        
+        # Check last N days
+        for days_ago in range(days_back):
+            check_date = now - timedelta(days=days_ago)
+            day_start = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timedelta(days=1)
+            weekday = check_date.weekday()
+            
+            # Check LACRES (Monday=0, Wednesday=2, Friday=4)
+            if weekday in [0, 2, 4]:
+                # Should have taken lacre photo
+                lacre_photos = await db.photos.count_documents({
+                    "employee_id": employee_id,
+                    "photo_type": "lacre",
+                    "timestamp": {"$gte": day_start, "$lt": day_end}
+                })
+                
+                if lacre_photos == 0:
+                    missing_lacres.append({
+                        "date": day_start.isoformat(),
+                        "date_formatted": check_date.strftime("%d/%m/%Y"),
+                        "weekday": ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"][weekday]
+                    })
+            
+            # Check MEDIDOR - Morning and Afternoon
+            medidor_manha = await db.photos.count_documents({
+                "employee_id": employee_id,
+                "photo_type": "medidor",
+                "period_code": "medidor_manha",
+                "timestamp": {"$gte": day_start, "$lt": day_end}
+            })
+            
+            medidor_tarde = await db.photos.count_documents({
+                "employee_id": employee_id,
+                "photo_type": "medidor",
+                "period_code": "medidor_tarde",
+                "timestamp": {"$gte": day_start, "$lt": day_end}
+            })
+            
+            if medidor_manha == 0:
+                missing_medidor.append({
+                    "date": day_start.isoformat(),
+                    "date_formatted": check_date.strftime("%d/%m/%Y"),
+                    "period": "Manhã",
+                    "weekday": ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"][weekday]
+                })
+            
+            if medidor_tarde == 0:
+                missing_medidor.append({
+                    "date": day_start.isoformat(),
+                    "date_formatted": check_date.strftime("%d/%m/%Y"),
+                    "period": "Tarde",
+                    "weekday": ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"][weekday]
+                })
+        
+        # Calculate compliance percentage
+        expected_lacres = len([d for d in range(days_back) if (now - timedelta(days=d)).weekday() in [0, 2, 4]])
+        expected_medidor = days_back * 2  # 2 per day (morning + afternoon)
+        
+        taken_lacres = expected_lacres - len(missing_lacres)
+        taken_medidor = expected_medidor - len(missing_medidor)
+        
+        lacre_compliance = (taken_lacres / expected_lacres * 100) if expected_lacres > 0 else 100
+        medidor_compliance = (taken_medidor / expected_medidor * 100) if expected_medidor > 0 else 100
+        
+        report.append({
+            "employee_id": employee_id,
+            "employee_name": employee_name,
+            "missing_lacres": missing_lacres,
+            "missing_medidor": missing_medidor,
+            "total_missing_lacres": len(missing_lacres),
+            "total_missing_medidor": len(missing_medidor),
+            "total_missing": len(missing_lacres) + len(missing_medidor),
+            "lacre_compliance": round(lacre_compliance, 1),
+            "medidor_compliance": round(medidor_compliance, 1),
+            "overall_compliance": round((lacre_compliance + medidor_compliance) / 2, 1)
+        })
+    
+    # Sort by most missing photos
+    report.sort(key=lambda x: x["total_missing"], reverse=True)
+    
+    return {
+        "report": report,
+        "period_days": days_back,
+        "generated_at": now.isoformat()
+    }
+
 # ==================== SEAL LOCATIONS ENDPOINTS ====================
 
 # Get all seal locations
