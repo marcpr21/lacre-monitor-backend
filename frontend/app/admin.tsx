@@ -371,15 +371,27 @@ export default function Admin() {
                   const lacrePhotos = employeePhotos.filter(p => p.photo_type === 'lacre');
                   const medidorPhotos = employeePhotos.filter(p => p.photo_type === 'medidor');
 
+                  const employeeKey = `${dateKey}-${employeeId}`;
+                  const isEmployeeExpanded = expandedEmployees.has(employeeKey);
+
                   return (
                     <View key={employeeId} style={styles.employeeSection}>
-                      <View style={styles.employeeSectionHeader}>
+                      <TouchableOpacity 
+                        style={styles.employeeSectionHeader}
+                        onPress={() => toggleEmployeeExpansion(employeeKey)}
+                        activeOpacity={0.7}
+                      >
                         <Ionicons name="person" size={18} color="#9C27B0" />
                         <Text style={styles.employeeSectionTitle}>{employeeName}</Text>
                         <View style={[styles.employeeCountBadge, { backgroundColor: '#9C27B0' }]}>
                           <Text style={styles.employeeCountText}>{employeePhotos.length}</Text>
                         </View>
-                      </View>
+                        <Ionicons 
+                          name={isEmployeeExpanded ? "chevron-up" : "chevron-down"} 
+                          size={20} 
+                          color="#9C27B0" 
+                        />
+                      </TouchableOpacity>
 
                       {/* Lacre Photos */}
                       {lacrePhotos.length > 0 && (
