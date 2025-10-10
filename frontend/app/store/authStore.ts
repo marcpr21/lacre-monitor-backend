@@ -30,22 +30,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   initAuth: async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      const userStr = await AsyncStorage.getItem('user');
+      // Always clear storage to require fresh login
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user');
       
-      if (token && userStr) {
-        const user = JSON.parse(userStr);
-        set({ user, token, isAuthenticated: true, isLoading: false });
-        
-        if (user.role === 'admin') {
-          router.replace('/admin');
-        } else {
-          router.replace('/home');
-        }
-      } else {
-        set({ isLoading: false });
-        router.replace('/login');
-      }
+      console.log('🔄 Starting fresh - login required');
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+      router.replace('/login');
     } catch (error) {
       console.error('Init auth error:', error);
       set({ isLoading: false });
