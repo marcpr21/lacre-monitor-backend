@@ -302,6 +302,10 @@ export default function Admin() {
             // Capitalize first letter
             const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
+            // Group by photo type within date
+            const lacrePhotos = datePhotos.filter(p => p.photo_type === 'lacre');
+            const medidorPhotos = datePhotos.filter(p => p.photo_type === 'medidor');
+
             return (
               <View key={dateKey} style={styles.dateSection}>
                 <View style={styles.dateSectionHeader}>
@@ -312,48 +316,87 @@ export default function Admin() {
                   </View>
                 </View>
 
-                {datePhotos.map((photo) => (
-                  <TouchableOpacity
-                    key={photo.id}
-                    style={styles.photoCard}
-                    onPress={() => openPhotoDetails(photo)}
-                  >
-                    <Image source={{ uri: photo.image_base64 }} style={styles.thumbnail} />
-                    <View style={styles.photoInfo}>
-                      <View style={styles.photoHeader}>
-                        <Text style={styles.employeeName}>{photo.employee_name}</Text>
-                        <View
-                          style={[
-                            styles.typeBadge,
-                            { backgroundColor: photo.photo_type === 'lacre' ? '#FF6B6B20' : '#4ECDC420' },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.typeText,
-                              { color: photo.photo_type === 'lacre' ? '#FF6B6B' : '#4ECDC4' },
-                            ]}
-                          >
-                            {photo.photo_type === 'lacre' ? 'Lacre' : 'Medidor'}
-                          </Text>
-                        </View>
+                {/* Lacre Photos */}
+                {lacrePhotos.length > 0 && (
+                  <View style={styles.typeSection}>
+                    <View style={styles.typeSectionHeader}>
+                      <Ionicons name="lock-closed" size={18} color="#FF6B6B" />
+                      <Text style={styles.typeSectionTitle}>Lacres</Text>
+                      <View style={[styles.typeCountBadge, { backgroundColor: '#FF6B6B' }]}>
+                        <Text style={styles.typeCountText}>{lacrePhotos.length}</Text>
                       </View>
-                      <Text style={styles.period}>{photo.scheduled_period}</Text>
-                      <View style={styles.photoMeta}>
-                        <Ionicons name="time-outline" size={14} color="#666" />
-                        <Text style={styles.metaText}>{formatDate(photo.timestamp)}</Text>
-                      </View>
-                      {photo.location_name && (
-                        <View style={styles.photoMeta}>
-                          <Ionicons name="location-outline" size={14} color="#666" />
-                          <Text style={styles.metaText} numberOfLines={1}>
-                            {photo.location_name}
-                          </Text>
-                        </View>
-                      )}
                     </View>
-                  </TouchableOpacity>
-                ))}
+
+                    {lacrePhotos.map((photo) => (
+                      <TouchableOpacity
+                        key={photo.id}
+                        style={styles.photoCard}
+                        onPress={() => openPhotoDetails(photo)}
+                      >
+                        <Image source={{ uri: photo.image_base64 }} style={styles.thumbnail} />
+                        <View style={styles.photoInfo}>
+                          <View style={styles.photoHeader}>
+                            <Text style={styles.employeeName}>{photo.employee_name}</Text>
+                          </View>
+                          <Text style={styles.period}>{photo.scheduled_period}</Text>
+                          <View style={styles.photoMeta}>
+                            <Ionicons name="time-outline" size={14} color="#666" />
+                            <Text style={styles.metaText}>{formatDate(photo.timestamp)}</Text>
+                          </View>
+                          {photo.location_name && (
+                            <View style={styles.photoMeta}>
+                              <Ionicons name="location-outline" size={14} color="#666" />
+                              <Text style={styles.metaText} numberOfLines={1}>
+                                {photo.location_name}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {/* Medidor Photos */}
+                {medidorPhotos.length > 0 && (
+                  <View style={styles.typeSection}>
+                    <View style={styles.typeSectionHeader}>
+                      <Ionicons name="speedometer" size={18} color="#4ECDC4" />
+                      <Text style={styles.typeSectionTitle}>Medidor</Text>
+                      <View style={[styles.typeCountBadge, { backgroundColor: '#4ECDC4' }]}>
+                        <Text style={styles.typeCountText}>{medidorPhotos.length}</Text>
+                      </View>
+                    </View>
+
+                    {medidorPhotos.map((photo) => (
+                      <TouchableOpacity
+                        key={photo.id}
+                        style={styles.photoCard}
+                        onPress={() => openPhotoDetails(photo)}
+                      >
+                        <Image source={{ uri: photo.image_base64 }} style={styles.thumbnail} />
+                        <View style={styles.photoInfo}>
+                          <View style={styles.photoHeader}>
+                            <Text style={styles.employeeName}>{photo.employee_name}</Text>
+                          </View>
+                          <Text style={styles.period}>{photo.scheduled_period}</Text>
+                          <View style={styles.photoMeta}>
+                            <Ionicons name="time-outline" size={14} color="#666" />
+                            <Text style={styles.metaText}>{formatDate(photo.timestamp)}</Text>
+                          </View>
+                          {photo.location_name && (
+                            <View style={styles.photoMeta}>
+                              <Ionicons name="location-outline" size={14} color="#666" />
+                              <Text style={styles.metaText} numberOfLines={1}>
+                                {photo.location_name}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
               </View>
             );
           });
