@@ -52,9 +52,9 @@ def make_request(method, endpoint, headers=None, json_data=None, params=None):
     url = f"{BASE_URL}{endpoint}"
     try:
         if method.upper() == "GET":
-            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response = requests.get(url, headers=headers, params=params, timeout=30)
         elif method.upper() == "POST":
-            response = requests.post(url, headers=headers, json=json_data, timeout=10)
+            response = requests.post(url, headers=headers, json=json_data, timeout=30)
         else:
             raise ValueError(f"Unsupported method: {method}")
         
