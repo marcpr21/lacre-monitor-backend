@@ -93,6 +93,12 @@ export default function Admin() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'compliance') {
+      loadComplianceData();
+    }
+  }, [activeTab, compliancePeriod]);
+
   const loadData = async () => {
     await Promise.all([loadPhotos(), loadEmployees()]);
   };
