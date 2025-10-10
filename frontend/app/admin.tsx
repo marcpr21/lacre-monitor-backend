@@ -833,30 +833,23 @@ export default function Admin() {
           {selectedPhoto && (
             <ScrollView 
               style={styles.modalContent}
-              maximumZoomScale={3}
-              minimumZoomScale={1}
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
             >
               <TouchableOpacity 
-                activeOpacity={1}
-                onPress={() => setImageZoomed(!imageZoomed)}
+                activeOpacity={0.8}
+                onPress={() => openImageViewer(selectedPhoto)}
                 style={styles.imageContainer}
               >
                 <Image
                   source={{ uri: selectedPhoto.image_base64 }}
-                  style={[
-                    styles.fullImage, 
-                    imageZoomed && styles.zoomedImage
-                  ]}
-                  resizeMode={imageZoomed ? "contain" : "contain"}
+                  style={styles.fullImage}
+                  resizeMode="contain"
                 />
-                {!imageZoomed && (
-                  <View style={styles.zoomIndicator}>
-                    <Ionicons name="expand" size={24} color="#FFF" />
-                    <Text style={styles.zoomText}>Toque para ampliar</Text>
-                  </View>
-                )}
+                <View style={styles.zoomIndicator}>
+                  <Ionicons name="expand" size={24} color="#FFF" />
+                  <Text style={styles.zoomText}>Toque para ampliar e dar zoom</Text>
+                </View>
               </TouchableOpacity>
 
               <View style={styles.detailsContainer}>
@@ -924,6 +917,31 @@ export default function Admin() {
           )}
         </SafeAreaView>
       </Modal>
+
+      {/* Image Viewer with Pinch-to-Zoom (Instagram-like) */}
+      {selectedPhoto && (
+        <ImageView
+          images={[{ uri: selectedPhoto.image_base64 }]}
+          imageIndex={imageViewerIndex}
+          visible={imageViewerVisible}
+          onRequestClose={() => setImageViewerVisible(false)}
+          FooterComponent={({ imageIndex }) => (
+            <View style={styles.imageViewerFooter}>
+              <View style={styles.imageViewerInfo}>
+                <Text style={styles.imageViewerText}>
+                  {selectedPhoto.employee_name}
+                </Text>
+                <Text style={styles.imageViewerSubText}>
+                  {selectedPhoto.photo_type === 'lacre' ? 'Lacre' : 'Medidor'} - {selectedPhoto.scheduled_period}
+                </Text>
+                <Text style={styles.imageViewerSubText}>
+                  {formatDate(selectedPhoto.timestamp)}
+                </Text>
+              </View>
+            </View>
+          )}
+        />
+      )}
     </SafeAreaView>
   );
 }
