@@ -79,10 +79,21 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.removeItem('user');
-    set({ user: null, token: null, isAuthenticated: false });
-    router.replace('/login');
+    try {
+      console.log('Logout function called');
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user');
+      console.log('Storage cleared');
+      set({ user: null, token: null, isAuthenticated: false });
+      console.log('State updated');
+      router.replace('/login');
+      console.log('Navigated to login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if storage fails
+      set({ user: null, token: null, isAuthenticated: false });
+      router.replace('/login');
+    }
   },
 }));
 
