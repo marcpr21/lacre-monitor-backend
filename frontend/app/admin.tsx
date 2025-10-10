@@ -747,7 +747,7 @@ export default function Admin() {
                                   • {missing.date_formatted} ({missing.weekday})
                                 </Text>
                               ))}
-                              {employee.missing_lacres.length > 5 && (
+                              {employee.missing_lacres && employee.missing_lacres.length > 5 && (
                                 <Text style={styles.moreItems}>
                                   +{employee.missing_lacres.length - 5} mais...
                                 </Text>
