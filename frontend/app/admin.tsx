@@ -142,6 +142,16 @@ export default function Admin() {
     setExpandedDates(newExpanded);
   };
 
+  const toggleEmployeeExpansion = (employeeKey: string) => {
+    const newExpanded = new Set(expandedEmployees);
+    if (newExpanded.has(employeeKey)) {
+      newExpanded.delete(employeeKey);
+    } else {
+      newExpanded.add(employeeKey);
+    }
+    setExpandedEmployees(newExpanded);
+  };
+
   const handleLogout = () => {
     Alert.alert('Sair', 'Deseja realmente sair?', [
       { text: 'Cancelar', style: 'cancel' },
