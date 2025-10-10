@@ -50,6 +50,7 @@ export default function Admin() {
   const [filterType, setFilterType] = useState<'all' | 'lacre' | 'medidor'>('all');
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user?.role !== 'admin') {
