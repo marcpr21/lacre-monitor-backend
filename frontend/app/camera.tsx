@@ -81,14 +81,31 @@ export default function Camera() {
     if (!cameraRef.current) return;
 
     try {
+      console.log('📸 Taking photo...');
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.7,
         base64: true,
+        skipProcessing: false,
       });
 
-      setCapturedPhoto(`data:image/jpeg;base64,${photo.base64}`);
+      console.log('✅ Photo captured:', {
+        uri: photo.uri,
+        width: photo.width,
+        height: photo.height,
+        base64Length: photo.base64 ? photo.base64.length : 0
+      });
+
+      if (!photo.base64 || photo.base64.length === 0) {
+        console.error('❌ No base64 data in photo');
+        Alert.alert('Erro', 'Imagem capturada está vazia');
+        return;
+      }
+
+      const imageData = `data:image/jpeg;base64,${photo.base64}`;
+      setCapturedPhoto(imageData);
+      console.log('✅ Photo saved to state');
     } catch (error) {
-      console.error('Error taking photo:', error);
+      console.error('❌ Error taking photo:', error);
       Alert.alert('Erro', 'Não foi possível tirar a foto');
     }
   };
