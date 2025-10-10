@@ -393,8 +393,8 @@ export default function Admin() {
                         />
                       </TouchableOpacity>
 
-                      {/* Lacre Photos */}
-                      {lacrePhotos.length > 0 && (
+                      {/* Lacre Photos - Only show if employee is expanded */}
+                      {isEmployeeExpanded && lacrePhotos.length > 0 && (
                         <View style={styles.typeSection}>
                           <View style={styles.typeSectionHeader}>
                             <Ionicons name="lock-closed" size={16} color="#FF6B6B" />
