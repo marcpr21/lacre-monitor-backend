@@ -1400,6 +1400,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     paddingLeft: 8,
   },
+  photoCountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F8FF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
+  refreshText: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
   closeButton: {
     padding: 12,
     borderRadius: 25,
