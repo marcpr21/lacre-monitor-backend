@@ -75,14 +75,17 @@ def test_authentication(result):
             if "token" in data and "user" in data:
                 admin_token = data["token"]
                 result.log_pass("Admin login with valid credentials")
-                return admin_token
+                admin_token = data["token"]
+                result.log_pass("Admin login with valid credentials")
             else:
                 result.log_fail("Admin login with valid credentials", "Missing token or user in response")
+                admin_token = None
         else:
             result.log_fail("Admin login with valid credentials", f"Status: {response.status_code if response else 'No response'}")
+            admin_token = None
     except Exception as e:
         result.log_fail("Admin login with valid credentials", str(e))
-        return None
+        admin_token = None
     
     # Test 2: Employee login with valid credentials
     try:
