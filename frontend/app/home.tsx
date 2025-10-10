@@ -194,6 +194,9 @@ export default function Home() {
 
     const scheduleData: ScheduleItem[] = [];
 
+    // CHECK IF USER IS "teste" - bypass all validations
+    const isTestUser = user?.username?.toLowerCase() === 'teste';
+
     // Check Lacre schedule
     const lacreDays = [1, 3, 5]; // Monday, Wednesday, Friday
     const isLacreDay = lacreDays.includes(dayOfWeek);
@@ -202,9 +205,11 @@ export default function Home() {
     scheduleData.push({
       type: 'lacre',
       title: 'Foto de Lacre',
-      description: 'Segunda, Quarta e Sexta até 12:00',
-      allowed: isLacreDay && isBeforeNoon,
-      message: isLacreDay
+      description: isTestUser ? 'Teste - Horário livre' : 'Segunda, Quarta e Sexta até 12:00',
+      allowed: isTestUser || (isLacreDay && isBeforeNoon),
+      message: isTestUser 
+        ? 'Usuário de teste - sempre disponível!'
+        : isLacreDay
         ? isBeforeNoon
           ? 'Disponível agora!'
           : 'Período encerrado (até 12:00)'
@@ -221,9 +226,11 @@ export default function Home() {
     scheduleData.push({
       type: 'medidor',
       title: 'Medidor - Manhã',
-      description: '06:00-09:00',
-      allowed: isMorning,
-      message: isMorning ? 'Disponível agora!' : 'Período: 06:00-09:00',
+      description: isTestUser ? 'Teste - Horário livre' : '06:00-09:00',
+      allowed: isTestUser || isMorning,
+      message: isTestUser 
+        ? 'Usuário de teste - sempre disponível!'
+        : isMorning ? 'Disponível agora!' : 'Período: 06:00-09:00',
       icon: 'sunny',
       color: '#FFA726',
     });
@@ -232,9 +239,11 @@ export default function Home() {
     scheduleData.push({
       type: 'medidor',
       title: 'Medidor - Tarde',
-      description: '17:00-18:00',
-      allowed: isEvening,
-      message: isEvening ? 'Disponível agora!' : 'Período: 17:00-18:00',
+      description: isTestUser ? 'Teste - Horário livre' : '17:00-18:00',
+      allowed: isTestUser || isEvening,
+      message: isTestUser 
+        ? 'Usuário de teste - sempre disponível!'
+        : isEvening ? 'Disponível agora!' : 'Período: 17:00-18:00',
       icon: 'moon',
       color: '#5C6BC0',
     });
