@@ -189,6 +189,18 @@ backend:
           agent: "testing"
           comment: "All endpoints properly protected with JWT authentication. Unauthorized requests return 401. Role-based access control working correctly - admin-only endpoints return 403 for employee users. Security middleware functioning as expected."
 
+  - task: "Compliance Report API"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Compliance report API endpoint /api/analytics/missing-photos already exists in backend. Provides detailed analysis of missing lacre and medidor photos by employee, includes compliance percentages and missing dates. Needs testing to verify functionality."
+
   - task: "API Root and Health"
     implemented: true
     working: true
