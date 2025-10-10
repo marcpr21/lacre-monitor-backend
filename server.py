@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import json
 import base64
 from typing import Optional
+from datetime import datetime
 
 # Criar a aplicação FastAPI
 app = FastAPI(title="Lacre Monitor API")
@@ -43,7 +44,6 @@ def validate_token(authorization: str = Header(None)):
     if not authorization:
         raise HTTPException(status_code=401, detail="Token required")
     
-    # Token simples - apenas verificar se existe
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid token format")
     
@@ -51,7 +51,6 @@ def validate_token(authorization: str = Header(None)):
     if not token or len(token) < 10:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-    # Retornar usuário baseado no token
     if "admin" in token:
         return USERS["admin"]
     else:
@@ -93,42 +92,43 @@ async def submit_photo(photo_data: PhotoSubmission, authorization: str = Header(
         current_user = validate_token(authorization)
         print(f"User validated: {current_user['username']}")
         
-        # Validar imagem base64 (limite de tamanho)
+        # Validar imagem base64
         try:
-            # Verificar se é base64 válido e não muito grande
             image_data = photo_data.image_base64
             if len(image_data) > 10000000:  # 10MB limit
                 raise HTTPException(status_code=400, detail="Image too large")
             
-            # Tentar decodificar para validar
             if image_data.startswith('data:image'):
-                # Remover prefixo se existir
-                image_data = image_data.split(',')[1]
+                base64_data = image_data.split(',')[1]
+            else:
+                base64_data = image_data
             
-            base64.b64decode(image_data[:100])  # Testar só o início
+            base64.b64decode(base64_data[:100])  # Test decode
             print("Image validation passed")
             
         except Exception as e:
             print(f"Image validation failed: {e}")
             raise HTTPException(status_code=400, detail="Invalid image format")
         
-        # Criar foto
+        # Criar foto com horário atual
+        current_time = datetime.now()
         photo_id = str(len(PHOTOS) + 1)
+        
         photo = {
             "id": photo_id,
             "employee_id": current_user["id"],
             "employee_name": current_user["name"],
             "photo_type": photo_data.photo_type,
-            "image_base64": f"data:image/jpeg;base64,{image_data[:1000]}...",  # Truncar para economizar
+            "image_base64": photo_data.image_base64,  # NÃO truncar a imagem
             "latitude": photo_data.latitude,
             "longitude": photo_data.longitude,
             "location_name": photo_data.location_name,
-            "timestamp": "2024-10-10T10:00:00",
-            "scheduled_period": f"{photo_data.photo_type} - Teste"
+            "timestamp": current_time.isoformat(),  # USAR horário atual
+            "scheduled_period": f"{photo_data.photo_type} - {current_time.strftime('%H:%M')}"  # Horário real
         }
         
         PHOTOS.append(photo)
-        print(f"Photo saved successfully - ID: {photo_id}")
+        print(f"Photo saved successfully - ID: {photo_id}, Time: {current_time.strftime('%H:%M')}")
         
         return {"message": "Photo submitted successfully", "photo_id": photo_id}
         
