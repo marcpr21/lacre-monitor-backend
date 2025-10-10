@@ -154,7 +154,7 @@ export default function Admin() {
         params: { days_back: compliancePeriod },
       });
 
-      setComplianceData(response.data.report);
+      setComplianceData(response.data.report || []);
     } catch (error) {
       console.error('Error loading compliance data:', error);
       Alert.alert('Erro', 'Não foi possível carregar o relatório de conformidade');
