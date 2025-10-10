@@ -279,10 +279,15 @@ export default function Admin() {
           )}
           <TouchableOpacity 
             style={styles.logoutButton} 
-            onPress={handleLogout}
-            onLongPress={() => {
-              console.log('Force logout (long press)');
-              logout();
+            onPress={() => {
+              console.log('Direct logout attempt');
+              
+              // For web, immediate logout without confirmation
+              if (Platform.OS === 'web') {
+                logout();
+              } else {
+                handleLogout();
+              }
             }}
           >
             <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
