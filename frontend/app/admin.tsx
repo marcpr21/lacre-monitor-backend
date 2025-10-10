@@ -235,13 +235,24 @@ export default function Admin() {
 
   const handleLogout = () => {
     console.log('Logout button pressed');
-    Alert.alert('Sair', 'Deseja realmente sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: () => {
-        console.log('User confirmed logout');
+    
+    // Para web, usar window.confirm em vez de Alert.alert
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Deseja realmente sair?');
+      if (confirmed) {
+        console.log('User confirmed logout (web)');
         logout();
-      }},
-    ]);
+      }
+    } else {
+      // Para mobile, usar Alert.alert
+      Alert.alert('Sair', 'Deseja realmente sair?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Sair', style: 'destructive', onPress: () => {
+          console.log('User confirmed logout (mobile)');
+          logout();
+        }},
+      ]);
+    }
   };
 
   return (
