@@ -146,6 +146,12 @@ export default function Admin() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.filterButton}
+            onPress={() => router.push('/users')}
+          >
+            <Ionicons name="people" size={24} color="#007AFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.filterButton}
             onPress={() => setShowFilters(!showFilters)}
           >
             <Ionicons name="filter" size={24} color="#007AFF" />
