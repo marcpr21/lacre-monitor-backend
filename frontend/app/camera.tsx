@@ -78,35 +78,54 @@ export default function Camera() {
   }
 
   const takePhoto = async () => {
-    if (!cameraRef.current) return;
+    if (!cameraRef.current) {
+      Alert.alert('Erro', 'Câmera não está disponível');
+      return;
+    }
 
     try {
       console.log('📸 Taking photo...');
+      
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
+        quality: 0.8,
         base64: true,
         skipProcessing: false,
+        exif: false,
       });
 
       console.log('✅ Photo captured:', {
         uri: photo.uri,
         width: photo.width,
         height: photo.height,
+        hasBase64: !!photo.base64,
         base64Length: photo.base64 ? photo.base64.length : 0
       });
 
-      if (!photo.base64 || photo.base64.length === 0) {
-        console.error('❌ No base64 data in photo');
+      // Verificar se temos dados válidos
+      if (!photo.uri && !photo.base64) {
+        console.error('❌ No photo data returned');
+        Alert.alert('Erro', 'Não foi possível capturar a imagem');
+        return;
+      }
+
+      // Priorizar URI se base64 não estiver disponível
+      if (photo.base64 && photo.base64.length > 0) {
+        const imageData = `data:image/jpeg;base64,${photo.base64}`;
+        console.log('✅ Using base64 data');
+        setCapturedPhoto(imageData);
+      } else if (photo.uri) {
+        console.log('✅ Using URI data:', photo.uri);
+        setCapturedPhoto(photo.uri);
+      } else {
+        console.error('❌ No valid image data');
         Alert.alert('Erro', 'Imagem capturada está vazia');
         return;
       }
 
-      const imageData = `data:image/jpeg;base64,${photo.base64}`;
-      setCapturedPhoto(imageData);
       console.log('✅ Photo saved to state');
     } catch (error) {
       console.error('❌ Error taking photo:', error);
-      Alert.alert('Erro', 'Não foi possível tirar a foto');
+      Alert.alert('Erro', `Não foi possível tirar a foto: ${error.message}`);
     }
   };
 
