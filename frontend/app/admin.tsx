@@ -1378,8 +1378,12 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
   },
   closeButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    padding: 12,
+    borderRadius: 25,
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    minWidth: 50,
+    minHeight: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
