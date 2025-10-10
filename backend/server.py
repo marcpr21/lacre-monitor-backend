@@ -389,8 +389,7 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
         "period_code": schedule_check.get("period_code", ""),
         "seal_location_id": photo.seal_location_id,
         "seal_location_name": seal_location_name,
-        "seal_number": photo.seal_number,
-        "expires_at": datetime.utcnow() + timedelta(days=15)  # Auto-delete after 15 days
+        "seal_number": photo.seal_number
     }
     
     await db.photos.insert_one(photo_doc)
