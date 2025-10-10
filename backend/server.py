@@ -61,6 +61,8 @@ class PhotoSubmit(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     location_name: Optional[str] = None
+    seal_location_id: Optional[str] = None  # For lacre photos
+    seal_number: Optional[int] = None  # For lacre photos (1, 2, 3, etc.)
 
 class PhotoResponse(BaseModel):
     id: str
