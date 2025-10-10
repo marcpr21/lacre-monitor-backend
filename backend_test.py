@@ -11,7 +11,7 @@ from datetime import datetime
 import sys
 
 # Configuration
-BASE_URL = "https://lacre-monitor.preview.emergentagent.com/api"
+BASE_URL = "https://seal-tracker-1.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {"username": "admin", "password": "admin123"}

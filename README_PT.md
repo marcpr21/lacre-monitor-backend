@@ -26,7 +26,7 @@ Sistema mobile para controle de fotos de lacres e medidores com validação de h
 
 ### Acesso ao App:
 
-**URL do App**: https://lacre-monitor.preview.emergentagent.com
+**URL do App**: https://seal-tracker-1.preview.emergentagent.com
 
 **Usuários de Teste:**
 
