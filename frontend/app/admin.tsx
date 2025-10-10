@@ -457,17 +457,30 @@ export default function Admin() {
                       })()}
 
                       {/* Medidor Photos - Only show if employee is expanded */}
-                      {isEmployeeExpanded && medidorPhotos.length > 0 && (
-                        <View style={styles.typeSection}>
-                          <View style={styles.typeSectionHeader}>
-                            <Ionicons name="speedometer" size={16} color="#4ECDC4" />
-                            <Text style={styles.typeSectionTitle}>Medidor</Text>
-                            <View style={[styles.typeCountBadge, { backgroundColor: '#4ECDC4' }]}>
-                              <Text style={styles.typeCountText}>{medidorPhotos.length}</Text>
-                            </View>
-                          </View>
+                      {isEmployeeExpanded && medidorPhotos.length > 0 && (() => {
+                        const medidorKey = `${employeeKey}-medidor`;
+                        const isMedidorExpanded = expandedPhotoTypes.has(medidorKey);
 
-                          {medidorPhotos.map((photo) => (
+                        return (
+                          <View style={styles.typeSection}>
+                            <TouchableOpacity 
+                              style={styles.typeSectionHeader}
+                              onPress={() => togglePhotoTypeExpansion(medidorKey)}
+                              activeOpacity={0.7}
+                            >
+                              <Ionicons name="speedometer" size={16} color="#4ECDC4" />
+                              <Text style={styles.typeSectionTitle}>Medidor</Text>
+                              <View style={[styles.typeCountBadge, { backgroundColor: '#4ECDC4' }]}>
+                                <Text style={styles.typeCountText}>{medidorPhotos.length}</Text>
+                              </View>
+                              <Ionicons 
+                                name={isMedidorExpanded ? "chevron-up" : "chevron-down"} 
+                                size={18} 
+                                color="#4ECDC4" 
+                              />
+                            </TouchableOpacity>
+
+                            {isMedidorExpanded && medidorPhotos.map((photo) => (
                             <TouchableOpacity
                               key={photo.id}
                               style={styles.photoCard}
