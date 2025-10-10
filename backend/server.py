@@ -273,6 +273,41 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
     if not schedule_check["allowed"]:
         raise HTTPException(status_code=400, detail=schedule_check["message"])
     
+    # For lacre photos with location
+    if photo.photo_type == "lacre" and photo.seal_location_id:
+        # Verify location exists
+        location = await db.seal_locations.find_one({"id": photo.seal_location_id})
+        if not location:
+            raise HTTPException(status_code=404, detail="Local não encontrado")
+        
+        # Verify seal number is valid
+        if not photo.seal_number or photo.seal_number < 1 or photo.seal_number > location["seal_count"]:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Número do lacre inválido. Deve ser entre 1 e {location['seal_count']}"
+            )
+        
+        # Check if this specific seal was already photographed today
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        
+        existing_photo = await db.photos.find_one({
+            "employee_id": current_user["id"],
+            "photo_type": "lacre",
+            "seal_location_id": photo.seal_location_id,
+            "seal_number": photo.seal_number,
+            "timestamp": {
+                "$gte": today_start,
+                "$lt": today_end
+            }
+        })
+        
+        if existing_photo:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Você já fotografou o lacre #{photo.seal_number} de {location['name']} hoje"
+            )
+    
     # For medidor photos, check if user already submitted for this period today
     if photo.photo_type == "medidor":
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -297,6 +332,12 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
     
     photo_id = str(uuid.uuid4())
     
+    # Get seal location name if applicable
+    seal_location_name = None
+    if photo.photo_type == "lacre" and photo.seal_location_id:
+        location = await db.seal_locations.find_one({"id": photo.seal_location_id})
+        seal_location_name = location["name"] if location else None
+    
     photo_doc = {
         "id": photo_id,
         "employee_id": current_user["id"],
@@ -309,15 +350,22 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
         "location_name": photo.location_name,
         "scheduled_period": schedule_check["period"],
         "period_code": schedule_check.get("period_code", ""),
+        "seal_location_id": photo.seal_location_id,
+        "seal_location_name": seal_location_name,
+        "seal_number": photo.seal_number,
         "expires_at": datetime.utcnow() + timedelta(days=15)  # Auto-delete after 15 days
     }
     
     await db.photos.insert_one(photo_doc)
     
+    message = "Foto enviada com sucesso!"
+    if photo.photo_type == "lacre" and seal_location_name and photo.seal_number:
+        message = f"Lacre #{photo.seal_number} de {seal_location_name} fotografado!"
+    
     return {
         "success": True,
         "photo_id": photo_id,
-        "message": "Foto enviada com sucesso!",
+        "message": message,
         "period": schedule_check["period"]
     }
 
