@@ -73,10 +73,31 @@ class PhotoResponse(BaseModel):
     longitude: Optional[float] = None
     location_name: Optional[str] = None
     scheduled_period: str  # e.g., "Segunda 06:00-12:00"
+    seal_location_id: Optional[str] = None
+    seal_location_name: Optional[str] = None
+    seal_number: Optional[int] = None
 
 class PhotoListResponse(BaseModel):
     photos: List[PhotoResponse]
     total: int
+
+# Seal Location Models
+class SealLocation(BaseModel):
+    id: str
+    name: str
+    seal_count: int
+    description: Optional[str] = None
+    created_at: datetime
+
+class SealLocationCreate(BaseModel):
+    name: str
+    seal_count: int
+    description: Optional[str] = None
+
+class SealLocationUpdate(BaseModel):
+    name: Optional[str] = None
+    seal_count: Optional[int] = None
+    description: Optional[str] = None
 
 # ==================== HELPER FUNCTIONS ====================
 
