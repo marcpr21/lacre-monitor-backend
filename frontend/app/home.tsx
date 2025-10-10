@@ -35,53 +35,156 @@ export default function Home() {
   }, []);
 
   const setupNotifications = async () => {
-    // Schedule notifications for photo reminders
+    // Cancel all existing notifications
     await Notifications.cancelAllScheduledNotificationsAsync();
 
-    // Lacre reminders: Monday, Wednesday, Friday at 10:00 AM
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sunday, 1=Monday
+    const hour = now.getHours();
+
+    // LACRE NOTIFICATIONS - Every 1 hour on valid days (Monday, Wednesday, Friday)
     const lacreDays = [1, 3, 5]; // Monday, Wednesday, Friday
-    for (const day of lacreDays) {
+    
+    if (lacreDays.includes(dayOfWeek) && hour < 12) {
+      // Schedule notifications every 1 hour until 12:00
+      for (let h = hour + 1; h <= 12; h++) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '🔒 Lembrete: Fotos de Lacre Pendentes',
+            body: `Não esqueça de tirar as fotos dos lacres! Você tem até 12:00 (${12 - h}h restantes)`,
+            sound: true,
+            priority: 'high',
+            vibrate: [0, 250, 250, 250],
+          },
+          trigger: {
+            hour: h,
+            minute: 0,
+            repeats: false,
+          },
+        });
+      }
+    }
+
+    // Schedule for next valid days
+    lacreDays.forEach(async (day) => {
+      // Morning reminders (8, 9, 10, 11 AM)
+      for (let h = 8; h <= 11; h++) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '🔒 Lembrete: Fotos de Lacre',
+            body: 'Hora de tirar as fotos dos lacres! Prazo até 12:00',
+            sound: true,
+            priority: 'high',
+            vibrate: [0, 250, 250, 250],
+          },
+          trigger: {
+            weekday: day,
+            hour: h,
+            minute: 0,
+            repeats: true,
+          },
+        });
+      }
+    });
+
+    // MEDIDOR NOTIFICATIONS - Every 15 minutes during valid periods
+    
+    // Morning period: 06:00-09:00
+    if (hour >= 6 && hour < 9) {
+      // Schedule for remaining time in current period
+      const minutesOptions = [0, 15, 30, 45];
+      const currentMinutes = now.getMinutes();
+      
+      for (let h = hour; h < 9; h++) {
+        for (const minute of minutesOptions) {
+          if (h === hour && minute <= currentMinutes) continue;
+          
+          const remainingTime = (9 - h - 1) * 60 + (60 - minute);
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: '⚡ Lembrete: Foto do Medidor (Manhã)',
+              body: `Tire a foto do medidor agora! Período: 06:00-09:00 (${Math.ceil(remainingTime / 60)}h restantes)`,
+              sound: true,
+              priority: 'max',
+              vibrate: [0, 250, 250, 250],
+            },
+            trigger: {
+              hour: h,
+              minute: minute,
+              repeats: false,
+            },
+          });
+        }
+      }
+    }
+
+    // Evening period: 17:00-18:00
+    if (hour >= 17 && hour < 18) {
+      // Schedule for remaining time in current period
+      const minutesOptions = [0, 15, 30, 45];
+      const currentMinutes = now.getMinutes();
+      
+      for (const minute of minutesOptions) {
+        if (minute <= currentMinutes) continue;
+        
+        const remainingTime = 60 - minute;
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '⚡ Lembrete: Foto do Medidor (Tarde)',
+            body: `Tire a foto do medidor agora! Período: 17:00-18:00 (${remainingTime}min restantes)`,
+            sound: true,
+            priority: 'max',
+            vibrate: [0, 250, 250, 250],
+          },
+          trigger: {
+            hour: 17,
+            minute: minute,
+            repeats: false,
+          },
+        });
+      }
+    }
+
+    // Schedule for future days - Morning period (every 15 min from 6-9 AM)
+    const minutesOptions = [0, 15, 30, 45];
+    for (let h = 6; h < 9; h++) {
+      for (const minute of minutesOptions) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '⚡ Foto do Medidor - Manhã',
+            body: 'Lembrete: Tire a foto do medidor agora! (06:00-09:00)',
+            sound: true,
+            priority: 'max',
+            vibrate: [0, 250, 250, 250],
+          },
+          trigger: {
+            hour: h,
+            minute: minute,
+            repeats: true,
+          },
+        });
+      }
+    }
+
+    // Schedule for future days - Evening period (every 15 min from 5-6 PM)
+    for (const minute of minutesOptions) {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Lembrete: Foto de Lacre',
-          body: 'Não esqueça de tirar a foto do lacre até 12:00!',
+          title: '⚡ Foto do Medidor - Tarde',
+          body: 'Lembrete: Tire a foto do medidor agora! (17:00-18:00)',
           sound: true,
+          priority: 'max',
+          vibrate: [0, 250, 250, 250],
         },
         trigger: {
-          weekday: day,
-          hour: 10,
-          minute: 0,
+          hour: 17,
+          minute: minute,
           repeats: true,
         },
       });
     }
 
-    // Medidor reminders: Daily at 7:00 AM and 5:00 PM
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Lembrete: Foto do Medidor',
-        body: 'Hora de tirar a foto do medidor (06:00-09:00)',
-        sound: true,
-      },
-      trigger: {
-        hour: 7,
-        minute: 0,
-        repeats: true,
-      },
-    });
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Lembrete: Foto do Medidor',
-        body: 'Hora de tirar a foto do medidor (17:00-18:00)',
-        sound: true,
-      },
-      trigger: {
-        hour: 17,
-        minute: 0,
-        repeats: true,
-      },
-    });
+    console.log('✅ Notificações agendadas com sucesso');
   };
 
   const loadSchedules = async () => {
