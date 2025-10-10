@@ -139,8 +139,18 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except jwt.JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-def check_photo_schedule(photo_type: str) -> dict:
+def check_photo_schedule(photo_type: str, username: str = None) -> dict:
     """Check if photo can be taken at current time and return schedule info"""
+    
+    # BYPASS VALIDATION FOR TEST USER
+    if username and username.lower() == "teste":
+        return {
+            "allowed": True,
+            "message": "Usuário de teste - horário livre",
+            "period": "Teste - qualquer horário",
+            "period_code": f"{photo_type}_teste"
+        }
+    
     now = get_brazil_time()  # Use Brazil timezone (UTC-3)
     weekday = now.weekday()  # 0=Monday, 6=Sunday
     hour = now.hour
