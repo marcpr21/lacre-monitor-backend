@@ -867,6 +867,18 @@ export default function Admin() {
                   </View>
                 )}
               </View>
+              
+              {/* Botão Fechar na parte inferior */}
+              <View style={styles.bottomButtonContainer}>
+                <TouchableOpacity 
+                  onPress={() => setShowModal(false)}
+                  style={styles.bottomCloseButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+                  <Text style={styles.bottomCloseButtonText}>Fechar</Text>
+                </TouchableOpacity>
+              </View>
             </ScrollView>
           )}
         </SafeAreaView>
