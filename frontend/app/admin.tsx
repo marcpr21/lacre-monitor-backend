@@ -277,7 +277,14 @@ export default function Admin() {
               <Ionicons name="filter" size={24} color="#007AFF" />
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <TouchableOpacity 
+            style={styles.logoutButton} 
+            onPress={handleLogout}
+            onLongPress={() => {
+              console.log('Force logout (long press)');
+              logout();
+            }}
+          >
             <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
           </TouchableOpacity>
         </View>
