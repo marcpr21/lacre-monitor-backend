@@ -135,6 +135,24 @@ export default function Admin() {
     }
   };
 
+  const loadComplianceData = async () => {
+    try {
+      setComplianceLoading(true);
+      const token = await getAuthToken();
+      const response = await axios.get(`${API_URL}/api/analytics/missing-photos`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { days_back: compliancePeriod },
+      });
+
+      setComplianceData(response.data.report);
+    } catch (error) {
+      console.error('Error loading compliance data:', error);
+      Alert.alert('Erro', 'Não foi possível carregar o relatório de conformidade');
+    } finally {
+      setComplianceLoading(false);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadData();
