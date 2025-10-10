@@ -1,5 +1,4 @@
 import { Stack } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
 import * as Notifications from 'expo-notifications';
@@ -29,21 +28,13 @@ export default function RootLayout() {
   };
 
   return (
-    <View style={styles.container}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="home" />
-        <Stack.Screen name="camera" />
-        <Stack.Screen name="admin" />
-        <Stack.Screen name="users" />
-      </Stack>
-    </View>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="home" />
+      <Stack.Screen name="camera" />
+      <Stack.Screen name="admin" />
+      <Stack.Screen name="users" />
+    </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
