@@ -140,9 +140,10 @@ export default function Admin() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setEmployees(response.data);
+      setEmployees(response.data || []);
     } catch (error) {
       console.error('Error loading employees:', error);
+      setEmployees([]); // Ensure employees is always an array
     }
   };
 
