@@ -155,8 +155,22 @@ export default function Admin() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadData();
+    if (activeTab === 'photos') {
+      await loadData();
+    } else {
+      await loadComplianceData();
+    }
     setRefreshing(false);
+  };
+
+  const toggleComplianceExpansion = (employeeId: string) => {
+    const newExpanded = new Set(expandedCompliance);
+    if (newExpanded.has(employeeId)) {
+      newExpanded.delete(employeeId);
+    } else {
+      newExpanded.add(employeeId);
+    }
+    setExpandedCompliance(newExpanded);
   };
 
   const openPhotoDetails = (photo: Photo) => {
