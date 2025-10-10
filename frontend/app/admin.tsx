@@ -198,6 +198,12 @@ export default function Admin() {
     setShowModal(true);
   };
 
+  const openImageViewer = (photo: Photo) => {
+    setSelectedPhoto(photo);
+    setImageViewerIndex(0);
+    setImageViewerVisible(true);
+  };
+
   const applyFilters = async () => {
     setShowFilters(false);
     await loadPhotos();
