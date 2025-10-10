@@ -250,6 +250,28 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
     if not schedule_check["allowed"]:
         raise HTTPException(status_code=400, detail=schedule_check["message"])
     
+    # For medidor photos, check if user already submitted for this period today
+    if photo.photo_type == "medidor":
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        
+        existing_photo = await db.photos.find_one({
+            "employee_id": current_user["id"],
+            "photo_type": "medidor",
+            "period_code": schedule_check["period_code"],
+            "timestamp": {
+                "$gte": today_start,
+                "$lt": today_end
+            }
+        })
+        
+        if existing_photo:
+            period_name = "manhã" if schedule_check["period_code"] == "medidor_manha" else "tarde"
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Você já enviou a foto do medidor do período da {period_name} hoje"
+            )
+    
     photo_id = str(uuid.uuid4())
     
     photo_doc = {
@@ -263,6 +285,7 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
         "longitude": photo.longitude,
         "location_name": photo.location_name,
         "scheduled_period": schedule_check["period"],
+        "period_code": schedule_check.get("period_code", ""),
         "expires_at": datetime.utcnow() + timedelta(days=15)  # Auto-delete after 15 days
     }
     
