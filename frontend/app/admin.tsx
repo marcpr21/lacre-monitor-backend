@@ -153,6 +153,16 @@ export default function Admin() {
     setExpandedEmployees(newExpanded);
   };
 
+  const togglePhotoTypeExpansion = (photoTypeKey: string) => {
+    const newExpanded = new Set(expandedPhotoTypes);
+    if (newExpanded.has(photoTypeKey)) {
+      newExpanded.delete(photoTypeKey);
+    } else {
+      newExpanded.add(photoTypeKey);
+    }
+    setExpandedPhotoTypes(newExpanded);
+  };
+
   const handleLogout = () => {
     Alert.alert('Sair', 'Deseja realmente sair?', [
       { text: 'Cancelar', style: 'cancel' },
