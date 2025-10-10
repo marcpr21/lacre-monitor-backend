@@ -80,34 +80,59 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try {
-      console.log('Logout function called');
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
-      console.log('Storage cleared');
-      set({ user: null, token: null, isAuthenticated: false });
-      console.log('State updated');
+      console.log('🚪 Logout initiated');
       
-      // Force navigation with multiple approaches
+      // Clear storage
       try {
-        router.replace('/login');
-        console.log('Router navigation attempted');
-      } catch (routerError) {
-        console.error('Router error:', routerError);
-        // Fallback navigation for web
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('user');
+        console.log('✅ Storage cleared');
+      } catch (storageError) {
+        console.warn('⚠️ Storage clear failed:', storageError);
       }
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force navigation even if storage fails
+      
+      // Update state immediately
       set({ user: null, token: null, isAuthenticated: false });
+      console.log('✅ Auth state cleared');
+      
+      // Navigate to login - multiple strategies
+      console.log('🔄 Attempting navigation...');
+      
+      // Strategy 1: Router replace
       try {
         router.replace('/login');
+        console.log('✅ Router navigation successful');
+        return;
       } catch (routerError) {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
+        console.warn('⚠️ Router failed:', routerError);
+      }
+      
+      // Strategy 2: Router push (fallback)
+      try {
+        router.push('/login');
+        console.log('✅ Router push successful');
+        return;
+      } catch (pushError) {
+        console.warn('⚠️ Router push failed:', pushError);
+      }
+      
+      // Strategy 3: Window location (web fallback)
+      if (typeof window !== 'undefined') {
+        console.log('🌐 Using window navigation for web');
+        window.location.href = '/login';
+        return;
+      }
+      
+      console.log('✅ Logout completed');
+      
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      
+      // Emergency fallback - just clear state
+      set({ user: null, token: null, isAuthenticated: false });
+      
+      if (typeof window !== 'undefined') {
+        window.location.reload();
       }
     }
   },
