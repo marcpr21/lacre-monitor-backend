@@ -330,15 +330,26 @@ export default function Admin() {
               return nameA.localeCompare(nameB);
             });
 
+            const isExpanded = expandedDates.has(dateKey);
+
             return (
               <View key={dateKey} style={styles.dateSection}>
-                <View style={styles.dateSectionHeader}>
+                <TouchableOpacity 
+                  style={styles.dateSectionHeader}
+                  onPress={() => toggleDateExpansion(dateKey)}
+                  activeOpacity={0.7}
+                >
                   <Ionicons name="calendar" size={20} color="#007AFF" />
                   <Text style={styles.dateSectionTitle}>{formattedDate}</Text>
                   <View style={styles.dateCountBadge}>
                     <Text style={styles.dateCountText}>{datePhotos.length}</Text>
                   </View>
-                </View>
+                  <Ionicons 
+                    name={isExpanded ? "chevron-up" : "chevron-down"} 
+                    size={24} 
+                    color="#666" 
+                  />
+                </TouchableOpacity>
 
                 {/* Employee Groups */}
                 {sortedEmployees.map((employeeId) => {
