@@ -85,8 +85,9 @@ export default function Admin() {
   const [compliancePeriod, setCompliancePeriod] = useState(30);
   const [expandedCompliance, setExpandedCompliance] = useState<Set<string>>(new Set());
   
-  // Photo zoom state
-  const [imageZoomed, setImageZoomed] = useState(false);
+  // Image viewer state
+  const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
   
   // Debug log to check if component is re-rendering
   console.log('Admin component rendered, activeTab:', activeTab);
