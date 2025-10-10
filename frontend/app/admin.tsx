@@ -351,8 +351,8 @@ export default function Admin() {
                   />
                 </TouchableOpacity>
 
-                {/* Employee Groups */}
-                {sortedEmployees.map((employeeId) => {
+                {/* Employee Groups - Only show if expanded */}
+                {isExpanded && sortedEmployees.map((employeeId) => {
                   const employeePhotos = employeeGroups[employeeId];
                   const employeeName = employeePhotos[0].employee_name;
                   
