@@ -795,7 +795,11 @@ export default function Admin() {
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Detalhes da Foto</Text>
-            <TouchableOpacity onPress={() => setShowModal(false)}>
+            <TouchableOpacity 
+              onPress={() => setShowModal(false)}
+              style={styles.closeButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Ionicons name="close" size={28} color="#333" />
             </TouchableOpacity>
           </View>
