@@ -1173,4 +1173,171 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
+  // Tab styles
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: '#007AFF',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  activeTabText: {
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  // Compliance styles
+  complianceHeader: {
+    marginBottom: 24,
+  },
+  complianceTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  complianceSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+  },
+  periodSelector: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  periodButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+  },
+  periodButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  periodButtonText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  periodButtonTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 64,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  complianceCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  complianceCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  complianceEmployeeInfo: {
+    flex: 1,
+  },
+  complianceEmployeeName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  complianceStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  complianceBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 50,
+    alignItems: 'center',
+  },
+  complianceBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  complianceMissing: {
+    fontSize: 14,
+    color: '#666',
+  },
+  complianceDetails: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  complianceSection: {
+    marginBottom: 16,
+  },
+  complianceSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F8F8F8',
+    borderRadius: 8,
+  },
+  complianceSectionTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  missingList: {
+    paddingLeft: 8,
+  },
+  missingItem: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  moreItems: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  noMissing: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '500',
+    paddingLeft: 8,
+  },
 });
