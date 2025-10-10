@@ -490,8 +490,12 @@ export default function Admin() {
 
             // Sort employees by name
             const sortedEmployees = Object.keys(employeeGroups).sort((a, b) => {
-              const nameA = employeeGroups[a][0].employee_name;
-              const nameB = employeeGroups[b][0].employee_name;
+              const groupA = employeeGroups[a];
+              const groupB = employeeGroups[b];
+              if (!groupA || !Array.isArray(groupA) || groupA.length === 0) return 1;
+              if (!groupB || !Array.isArray(groupB) || groupB.length === 0) return -1;
+              const nameA = groupA[0].employee_name;
+              const nameB = groupB[0].employee_name;
               return nameA.localeCompare(nameB);
             });
 
