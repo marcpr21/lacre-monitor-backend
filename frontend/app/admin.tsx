@@ -40,6 +40,28 @@ interface Employee {
   role: string;
 }
 
+interface ComplianceReport {
+  employee_id: string;
+  employee_name: string;
+  missing_lacres: {
+    date: string;
+    date_formatted: string;
+    weekday: string;
+  }[];
+  missing_medidor: {
+    date: string;
+    date_formatted: string;
+    period: string;
+    weekday: string;
+  }[];
+  total_missing_lacres: number;
+  total_missing_medidor: number;
+  total_missing: number;
+  lacre_compliance: number;
+  medidor_compliance: number;
+  overall_compliance: number;
+}
+
 export default function Admin() {
   const { user, logout } = useAuthStore();
   const [photos, setPhotos] = useState<Photo[]>([]);
