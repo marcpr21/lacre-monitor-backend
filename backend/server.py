@@ -349,7 +349,7 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
         "employee_name": current_user["name"],
         "photo_type": photo.photo_type,
         "image_base64": photo.image_base64,
-        "timestamp": datetime.utcnow(),
+        "timestamp": get_brazil_time(),
         "latitude": photo.latitude,
         "longitude": photo.longitude,
         "location_name": photo.location_name,
