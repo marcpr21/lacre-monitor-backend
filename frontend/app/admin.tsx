@@ -1376,4 +1376,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     paddingLeft: 8,
   },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
 });
