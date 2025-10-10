@@ -794,15 +794,8 @@ export default function Admin() {
       {/* Photo Details Modal */}
       <Modal visible={showModal} animationType="slide" onRequestClose={() => setShowModal(false)}>
         <View style={styles.modalContainer}>
-          <View style={[styles.modalHeader, { paddingTop: Math.max(insets.top + 8, 20) }]}>
+          <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Detalhes da Foto</Text>
-            <TouchableOpacity 
-              onPress={() => setShowModal(false)}
-              style={styles.closeButton}
-              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-            >
-              <Ionicons name="close" size={32} color="#333" />
-            </TouchableOpacity>
           </View>
 
           {selectedPhoto && (
