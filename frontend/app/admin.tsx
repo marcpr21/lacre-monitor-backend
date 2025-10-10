@@ -51,6 +51,7 @@ export default function Admin() {
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user?.role !== 'admin') {
