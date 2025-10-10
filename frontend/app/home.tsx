@@ -35,8 +35,19 @@ export default function Home() {
   }, []);
 
   const setupNotifications = async () => {
-    // Cancel all existing notifications
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    // Skip notifications on web platform
+    if (Platform.OS === 'web') {
+      console.log('Notifications not available on web platform');
+      return;
+    }
+
+    try {
+      // Cancel all existing notifications
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    } catch (error) {
+      console.error('Error setting up notifications:', error);
+      return;
+    }
 
     const now = new Date();
     const dayOfWeek = now.getDay(); // 0=Sunday, 1=Monday
