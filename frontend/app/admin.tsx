@@ -128,6 +128,7 @@ export default function Admin() {
       setPhotos(response.data.photos || []);
     } catch (error) {
       console.error('Error loading photos:', error);
+      setPhotos([]); // Ensure photos is always an array
       Alert.alert('Erro', 'Não foi possível carregar as fotos');
     }
   };
