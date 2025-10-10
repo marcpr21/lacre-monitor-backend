@@ -315,7 +315,7 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
     
     # For medidor photos, check if user already submitted for this period today
     if photo.photo_type == "medidor":
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start = get_brazil_time().replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start + timedelta(days=1)
         
         existing_photo = await db.photos.find_one({
