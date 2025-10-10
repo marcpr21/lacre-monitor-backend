@@ -241,6 +241,18 @@ frontend:
           agent: "main"
           comment: "Implemented compliance report tab in admin panel with tab navigation, period selector (7/30/90 days), employee compliance cards with expandable details, visual compliance indicators, and integration with /api/analytics/missing-photos endpoint. Frontend implementation complete."
 
+  - task: "Photo Zoom Functionality (Instagram-style)"
+    implemented: true
+    working: "NA"
+    file: "frontend/app/admin.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented Instagram-style pinch-to-zoom functionality for photos in admin panel using react-native-image-viewing library. Users can tap on photos to open full-screen viewer with gesture-based zoom (pinch-to-zoom), double-tap to zoom, and swipe gestures. Footer displays photo details (employee name, type, period, timestamp). Library installed and integrated successfully."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
