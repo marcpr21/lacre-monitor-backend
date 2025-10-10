@@ -397,7 +397,7 @@ export default function Admin() {
                 Todos
               </Text>
             </TouchableOpacity>
-            {employees.map((emp) => (
+            {employees && Array.isArray(employees) && employees.map((emp) => (
               <TouchableOpacity
                 key={emp.id}
                 style={[
