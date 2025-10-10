@@ -544,6 +544,9 @@ def main():
     # Test photo retrieval
     test_photo_retrieval(result, admin_token, employee_token)
     
+    # Test compliance report API (NEW - as requested)
+    test_compliance_report_api(result, admin_token, employee_token)
+    
     # Print summary
     success = result.summary()
     
