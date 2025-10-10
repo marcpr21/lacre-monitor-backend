@@ -234,9 +234,13 @@ export default function Admin() {
   };
 
   const handleLogout = () => {
+    console.log('Logout button pressed');
     Alert.alert('Sair', 'Deseja realmente sair?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: logout },
+      { text: 'Sair', style: 'destructive', onPress: () => {
+        console.log('User confirmed logout');
+        logout();
+      }},
     ]);
   };
 
