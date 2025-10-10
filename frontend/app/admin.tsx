@@ -557,6 +557,38 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 16,
   },
+  dateSection: {
+    marginBottom: 24,
+  },
+  dateSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 8,
+  },
+  dateSectionTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  dateCountBadge: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 30,
+    alignItems: 'center',
+  },
+  dateCountText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   photoCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
