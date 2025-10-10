@@ -292,8 +292,8 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
                 detail=f"Número do lacre inválido. Deve ser entre 1 e {location['seal_count']}"
             )
         
-        # Check if this specific seal was already photographed today
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        # Check if this specific seal was already photographed today (Brazil time)
+        today_start = get_brazil_time().replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start + timedelta(days=1)
         
         existing_photo = await db.photos.find_one({
