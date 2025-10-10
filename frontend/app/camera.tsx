@@ -215,7 +215,18 @@ export default function Camera() {
             </Text>
           </View>
 
-          <Image source={{ uri: capturedPhoto }} style={styles.previewImage} />
+          {capturedPhoto ? (
+            <Image 
+              source={{ uri: capturedPhoto }} 
+              style={styles.previewImage}
+              onLoad={() => console.log('✅ Image loaded successfully')}
+              onError={(error) => console.log('❌ Image load error:', error)}
+            />
+          ) : (
+            <View style={[styles.previewImage, { backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' }]}>
+              <Text>Erro: Imagem não capturada</Text>
+            </View>
+          )}
 
           <View style={styles.previewActions}>
             <TouchableOpacity
