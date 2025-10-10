@@ -57,7 +57,128 @@ def validate_token(authorization: str = Header(None)):
     token = authorization.replace("Bearer ", "")
     if not token or len(token) < 10:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+@app.post("/api/users/create")
+async def create_user(user_data: dict, authorization: str = Header(None)):
+    try:
+        current_user = validate_token(authorization)
+        
+        # Only admins can create users
+        if current_user["role"] != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        # Check if username already exists
+        if user_data["username"] in USERS:
+            raise HTTPException(status_code=400, detail="Username already exists")
+        
+        # Create new user
+        new_user_id = str(len(USERS) + 1)
+        USERS[user_data["username"]] = {
+            "id": new_user_id,
+            "username": user_data["username"],
+            "name": user_data["name"],
+            "password": user_data["password"],
+            "role": user_data.get("role", "employee")
+        }
+        
+        print(f"User created: {user_data['username']}")
+        
+        return {"message": "User created successfully", "user_id": new_user_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/api/users/all")
+async def get_all_users(authorization: str = Header(None)):
+    try:
+        current_user = validate_token(authorization)
+        
+        if current_user["role"] != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        users_list = []
+        for username, user_data in USERS.items():
+            users_list.append({
+                "id": user_data["id"],
+                "username": user_data["username"], 
+                "name": user_data["name"],
+                "role": user_data["role"]
+            })
+        
+        return users_list
+        
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        return []
+
+@app.put("/api/users/{user_id}")
+async def update_user(user_id: str, user_data: dict, authorization: str = Header(None)):
+    try:
+        current_user = validate_token(authorization)
+        
+        if current_user["role"] != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        # Find user by ID
+        user_to_update = None
+        username_to_update = None
+        
+        for username, user_info in USERS.items():
+            if user_info["id"] == user_id:
+                user_to_update = user_info
+                username_to_update = username
+                break
+        
+        if not user_to_update:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update user data
+        if "name" in user_data:
+            USERS[username_to_update]["name"] = user_data["name"]
+        if "role" in user_data:
+            USERS[username_to_update]["role"] = user_data["role"]
+        
+        return {"message": "User updated successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating user: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.delete("/api/users/{user_id}")
+async def delete_user(user_id: str, authorization: str = Header(None)):
+    try:
+        current_user = validate_token(authorization)
+        
+        if current_user["role"] != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        # Find and delete user by ID
+        username_to_delete = None
+        
+        for username, user_info in USERS.items():
+            if user_info["id"] == user_id:
+                username_to_delete = username
+                break
+        
+        if not username_to_delete:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if USERS[username_to_delete]["role"] == "admin":
+            raise HTTPException(status_code=400, detail="Cannot delete admin user")
+        
+        del USERS[username_to_delete]
+        
+        return {"message": "User deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting user: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")    
     if "admin" in token:
         return USERS["admin"]
     else:
