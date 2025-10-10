@@ -4,7 +4,14 @@ from pydantic import BaseModel
 import json
 import base64
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# Timezone do Brasil (UTC-3)
+BRAZIL_TZ = timezone(timedelta(hours=-3))
+
+def get_brazil_time():
+    """Retorna o horário atual do Brasil (UTC-3)"""
+    return datetime.now(BRAZIL_TZ)
 
 # Criar a aplicação FastAPI
 app = FastAPI(title="Lacre Monitor API")
@@ -59,7 +66,12 @@ def validate_token(authorization: str = Header(None)):
 # Rotas básicas
 @app.get("/")
 async def root():
-    return {"message": "Lacre Monitor API Online!", "status": "success"}
+    current_time = get_brazil_time()
+    return {
+        "message": "Lacre Monitor API Online!", 
+        "status": "success",
+        "brazil_time": current_time.strftime("%H:%M:%S %d/%m/%Y")
+    }
 
 @app.get("/api/health")
 async def health():
@@ -110,8 +122,8 @@ async def submit_photo(photo_data: PhotoSubmission, authorization: str = Header(
             print(f"Image validation failed: {e}")
             raise HTTPException(status_code=400, detail="Invalid image format")
         
-        # Criar foto com horário atual
-        current_time = datetime.now()
+        # Criar foto com horário atual do Brasil
+        current_time = get_brazil_time()
         photo_id = str(len(PHOTOS) + 1)
         
         photo = {
@@ -119,16 +131,16 @@ async def submit_photo(photo_data: PhotoSubmission, authorization: str = Header(
             "employee_id": current_user["id"],
             "employee_name": current_user["name"],
             "photo_type": photo_data.photo_type,
-            "image_base64": photo_data.image_base64,  # NÃO truncar a imagem
+            "image_base64": photo_data.image_base64,
             "latitude": photo_data.latitude,
             "longitude": photo_data.longitude,
             "location_name": photo_data.location_name,
-            "timestamp": current_time.isoformat(),  # USAR horário atual
-            "scheduled_period": f"{photo_data.photo_type} - {current_time.strftime('%H:%M')}"  # Horário real
+            "timestamp": current_time.isoformat(),
+            "scheduled_period": f"{photo_data.photo_type} - {current_time.strftime('%H:%M')}"
         }
         
         PHOTOS.append(photo)
-        print(f"Photo saved successfully - ID: {photo_id}, Time: {current_time.strftime('%H:%M')}")
+        print(f"Photo saved successfully - ID: {photo_id}, Brazil Time: {current_time.strftime('%H:%M:%S')}")
         
         return {"message": "Photo submitted successfully", "photo_id": photo_id}
         
