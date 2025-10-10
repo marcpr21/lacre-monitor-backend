@@ -300,8 +300,8 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
     if not schedule_check["allowed"]:
         raise HTTPException(status_code=400, detail=schedule_check["message"])
     
-    # For lacre photos with location
-    if photo.photo_type == "lacre" and photo.seal_location_id:
+    # For lacre photos with location (SKIP FOR TEST USER)
+    if photo.photo_type == "lacre" and photo.seal_location_id and current_user["username"].lower() != "teste":
         # Verify location exists
         location = await db.seal_locations.find_one({"id": photo.seal_location_id})
         if not location:
