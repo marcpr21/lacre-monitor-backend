@@ -3,7 +3,11 @@ import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
 
 export default function Index() {
-  const { isLoading } = useAuthStore();
+  const { isLoading, initAuth } = useAuthStore();
+
+  useEffect(() => {
+    initAuth();
+  }, []);
 
   if (isLoading) {
     return (
