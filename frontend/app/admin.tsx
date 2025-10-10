@@ -158,6 +158,7 @@ export default function Admin() {
       setComplianceData(response.data.report || []);
     } catch (error) {
       console.error('Error loading compliance data:', error);
+      setComplianceData([]); // Ensure complianceData is always an array
       Alert.alert('Erro', 'Não foi possível carregar o relatório de conformidade');
     } finally {
       setComplianceLoading(false);
