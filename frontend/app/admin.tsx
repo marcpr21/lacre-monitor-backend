@@ -478,7 +478,8 @@ export default function Admin() {
 
             // Group by employee within date
             const employeeGroups: { [key: string]: Photo[] } = {};
-            datePhotos.forEach((photo) => {
+            if (datePhotos && Array.isArray(datePhotos)) {
+              datePhotos.forEach((photo) => {
               const employeeKey = photo.employee_id;
               if (!employeeGroups[employeeKey]) {
                 employeeGroups[employeeKey] = [];
