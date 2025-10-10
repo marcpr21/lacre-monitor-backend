@@ -794,8 +794,15 @@ export default function Admin() {
       {/* Photo Details Modal */}
       <Modal visible={showModal} animationType="slide" onRequestClose={() => setShowModal(false)}>
         <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
+          <View style={[styles.modalHeader, { paddingTop: Math.max(insets.top + 20, 40) }]}>
             <Text style={styles.modalTitle}>Detalhes da Foto</Text>
+            <TouchableOpacity 
+              onPress={() => setShowModal(false)}
+              style={styles.fixedCloseButton}
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            >
+              <Ionicons name="close-circle" size={36} color="#FF6B6B" />
+            </TouchableOpacity>
           </View>
 
           {selectedPhoto && (
@@ -866,18 +873,6 @@ export default function Admin() {
                     </View>
                   </View>
                 )}
-              </View>
-              
-              {/* Botão Fechar na parte inferior */}
-              <View style={styles.bottomButtonContainer}>
-                <TouchableOpacity 
-                  onPress={() => setShowModal(false)}
-                  style={styles.bottomCloseButton}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="close-circle" size={24} color="#FF6B6B" />
-                  <Text style={styles.bottomCloseButtonText}>Fechar</Text>
-                </TouchableOpacity>
               </View>
             </ScrollView>
           )}
