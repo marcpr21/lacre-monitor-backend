@@ -294,8 +294,8 @@ async def get_me(current_user = Depends(get_current_user)):
 # Submit Photo
 @api_router.post("/photos/submit")
 async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_user)):
-    # Check schedule
-    schedule_check = check_photo_schedule(photo.photo_type)
+    # Check schedule (pass username to allow test user bypass)
+    schedule_check = check_photo_schedule(photo.photo_type, current_user["username"])
     
     if not schedule_check["allowed"]:
         raise HTTPException(status_code=400, detail=schedule_check["message"])
