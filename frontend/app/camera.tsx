@@ -28,6 +28,27 @@ export default function Camera() {
   const [uploading, setUploading] = useState(false);
   const cameraRef = useRef<any>(null);
 
+  // Show web limitation message
+  if (Platform.OS === 'web') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.webNoticeContainer}>
+          <Ionicons name="phone-portrait-outline" size={80} color="#007AFF" />
+          <Text style={styles.webNoticeTitle}>Câmera Disponível Apenas no Mobile</Text>
+          <Text style={styles.webNoticeText}>
+            Para tirar fotos, acesse o aplicativo através do Expo Go no seu celular.
+          </Text>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   useEffect(() => {
     if (!permission?.granted) {
       requestPermission();
