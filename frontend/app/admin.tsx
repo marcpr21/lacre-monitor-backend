@@ -17,6 +17,7 @@ import { useAuthStore, getAuthToken } from './store/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import axios from 'axios';
+import ImageView from 'react-native-image-viewing';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
