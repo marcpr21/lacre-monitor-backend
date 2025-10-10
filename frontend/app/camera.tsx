@@ -7,6 +7,7 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Platform,
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
