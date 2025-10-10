@@ -393,11 +393,7 @@ def main():
     test_api_root(result)
     
     # Test authentication and get tokens
-    tokens = test_authentication(result)
-    if tokens:
-        admin_token, employee_token = tokens
-    else:
-        admin_token, employee_token = None, None
+    admin_token, employee_token = test_authentication(result)
     
     # Test user info endpoints
     test_user_info(result, admin_token, employee_token)
