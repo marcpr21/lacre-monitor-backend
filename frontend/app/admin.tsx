@@ -259,55 +259,105 @@ export default function Admin() {
       >
         <Text style={styles.photoCount}>Total: {photos.length} fotos</Text>
 
-        {photos.map((photo) => (
-          <TouchableOpacity
-            key={photo.id}
-            style={styles.photoCard}
-            onPress={() => openPhotoDetails(photo)}
-          >
-            <Image source={{ uri: photo.image_base64 }} style={styles.thumbnail} />
-            <View style={styles.photoInfo}>
-              <View style={styles.photoHeader}>
-                <Text style={styles.employeeName}>{photo.employee_name}</Text>
-                <View
-                  style={[
-                    styles.typeBadge,
-                    { backgroundColor: photo.photo_type === 'lacre' ? '#FF6B6B20' : '#4ECDC420' },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.typeText,
-                      { color: photo.photo_type === 'lacre' ? '#FF6B6B' : '#4ECDC4' },
-                    ]}
-                  >
-                    {photo.photo_type === 'lacre' ? 'Lacre' : 'Medidor'}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.period}>{photo.scheduled_period}</Text>
-              <View style={styles.photoMeta}>
-                <Ionicons name="time-outline" size={14} color="#666" />
-                <Text style={styles.metaText}>{formatDate(photo.timestamp)}</Text>
-              </View>
-              {photo.location_name && (
-                <View style={styles.photoMeta}>
-                  <Ionicons name="location-outline" size={14} color="#666" />
-                  <Text style={styles.metaText} numberOfLines={1}>
-                    {photo.location_name}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        ))}
+        {(() => {
+          // Group photos by date
+          const groupedPhotos: { [key: string]: Photo[] } = {};
+          
+          photos.forEach((photo) => {
+            const date = new Date(photo.timestamp);
+            const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            if (!groupedPhotos[dateKey]) {
+              groupedPhotos[dateKey] = [];
+            }
+            groupedPhotos[dateKey].push(photo);
+          });
 
-        {photos.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="images-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>Nenhuma foto encontrada</Text>
-          </View>
-        )}
+          // Sort dates in descending order (most recent first)
+          const sortedDates = Object.keys(groupedPhotos).sort((a, b) => 
+            new Date(b).getTime() - new Date(a).getTime()
+          );
+
+          if (sortedDates.length === 0) {
+            return (
+              <View style={styles.emptyState}>
+                <Ionicons name="images-outline" size={64} color="#ccc" />
+                <Text style={styles.emptyText}>Nenhuma foto encontrada</Text>
+              </View>
+            );
+          }
+
+          return sortedDates.map((dateKey) => {
+            const datePhotos = groupedPhotos[dateKey];
+            const date = new Date(dateKey + 'T12:00:00'); // Avoid timezone issues
+            
+            // Format date
+            const dateStr = date.toLocaleDateString('pt-BR', {
+              weekday: 'long',
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            });
+
+            // Capitalize first letter
+            const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+
+            return (
+              <View key={dateKey} style={styles.dateSection}>
+                <View style={styles.dateSectionHeader}>
+                  <Ionicons name="calendar" size={20} color="#007AFF" />
+                  <Text style={styles.dateSectionTitle}>{formattedDate}</Text>
+                  <View style={styles.dateCountBadge}>
+                    <Text style={styles.dateCountText}>{datePhotos.length}</Text>
+                  </View>
+                </View>
+
+                {datePhotos.map((photo) => (
+                  <TouchableOpacity
+                    key={photo.id}
+                    style={styles.photoCard}
+                    onPress={() => openPhotoDetails(photo)}
+                  >
+                    <Image source={{ uri: photo.image_base64 }} style={styles.thumbnail} />
+                    <View style={styles.photoInfo}>
+                      <View style={styles.photoHeader}>
+                        <Text style={styles.employeeName}>{photo.employee_name}</Text>
+                        <View
+                          style={[
+                            styles.typeBadge,
+                            { backgroundColor: photo.photo_type === 'lacre' ? '#FF6B6B20' : '#4ECDC420' },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.typeText,
+                              { color: photo.photo_type === 'lacre' ? '#FF6B6B' : '#4ECDC4' },
+                            ]}
+                          >
+                            {photo.photo_type === 'lacre' ? 'Lacre' : 'Medidor'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.period}>{photo.scheduled_period}</Text>
+                      <View style={styles.photoMeta}>
+                        <Ionicons name="time-outline" size={14} color="#666" />
+                        <Text style={styles.metaText}>{formatDate(photo.timestamp)}</Text>
+                      </View>
+                      {photo.location_name && (
+                        <View style={styles.photoMeta}>
+                          <Ionicons name="location-outline" size={14} color="#666" />
+                          <Text style={styles.metaText} numberOfLines={1}>
+                            {photo.location_name}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            );
+          });
+        })()}
       </ScrollView>
 
       {/* Photo Details Modal */}
