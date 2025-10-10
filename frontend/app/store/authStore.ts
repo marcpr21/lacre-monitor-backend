@@ -86,13 +86,29 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.log('Storage cleared');
       set({ user: null, token: null, isAuthenticated: false });
       console.log('State updated');
-      router.replace('/login');
-      console.log('Navigated to login');
+      
+      // Force navigation with multiple approaches
+      try {
+        router.replace('/login');
+        console.log('Router navigation attempted');
+      } catch (routerError) {
+        console.error('Router error:', routerError);
+        // Fallback navigation for web
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }
     } catch (error) {
       console.error('Logout error:', error);
       // Force navigation even if storage fails
       set({ user: null, token: null, isAuthenticated: false });
-      router.replace('/login');
+      try {
+        router.replace('/login');
+      } catch (routerError) {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }
     }
   },
 }));
