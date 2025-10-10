@@ -3,7 +3,8 @@ module.exports = function(api) {
   return {
     presets: [
       ['babel-preset-expo', { 
-        reanimated: false  // Disable auto-loading reanimated plugin
+        reanimated: false,  // Disable auto-loading reanimated plugin
+        worklets: false     // Disable auto-loading worklets plugin
       }]
     ],
     plugins: []
