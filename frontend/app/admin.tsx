@@ -793,7 +793,7 @@ export default function Admin() {
 
       {/* Photo Details Modal */}
       <Modal visible={showModal} animationType="slide" onRequestClose={() => setShowModal(false)}>
-        <View style={styles.modalContainer}>
+        <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Detalhes da Foto</Text>
           </View>
