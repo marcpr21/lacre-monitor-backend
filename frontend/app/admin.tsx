@@ -428,7 +428,7 @@ export default function Admin() {
       >
         {activeTab === 'photos' ? (
           <>
-            <Text style={styles.photoCount}>Total: {photos.length} fotos</Text>
+            <Text style={styles.photoCount}>Total: {photos?.length || 0} fotos</Text>
 
         {(() => {
           // Group photos by date
