@@ -369,6 +369,135 @@ def test_photo_retrieval(result, admin_token, employee_token):
     except Exception as e:
         result.log_fail("Get photos without authentication (should fail)", str(e))
 
+def test_compliance_report_api(result, admin_token, employee_token):
+    """Test compliance report API endpoint /api/analytics/missing-photos"""
+    print("\n📊 Testing Compliance Report API...")
+    
+    # Test 1: Admin access to compliance report
+    if admin_token:
+        try:
+            headers = {"Authorization": f"Bearer {admin_token}"}
+            response = make_request("GET", "/analytics/missing-photos", headers=headers)
+            if response and response.status_code == 200:
+                data = response.json()
+                required_fields = ["report", "period_days", "generated_at"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields and isinstance(data["report"], list):
+                    result.log_pass("Compliance report - Admin access")
+                else:
+                    result.log_fail("Compliance report - Admin access", f"Missing fields: {missing_fields} or report not a list")
+            else:
+                result.log_fail("Compliance report - Admin access", f"Status: {response.status_code if response else 'No response'}")
+        except Exception as e:
+            result.log_fail("Compliance report - Admin access", str(e))
+    
+    # Test 2: Employee access (should fail with 403)
+    if employee_token:
+        try:
+            headers = {"Authorization": f"Bearer {employee_token}"}
+            response = make_request("GET", "/analytics/missing-photos", headers=headers)
+            if response and response.status_code == 403:
+                result.log_pass("Compliance report - Employee access denied (403)")
+            else:
+                result.log_fail("Compliance report - Employee access denied (403)", f"Expected 403, got {response.status_code if response else 'No response'}")
+        except Exception as e:
+            result.log_fail("Compliance report - Employee access denied (403)", str(e))
+    
+    # Test 3: Different days_back parameters
+    if admin_token:
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        test_periods = [7, 30, 90]
+        
+        for days_back in test_periods:
+            try:
+                params = {"days_back": days_back}
+                response = make_request("GET", "/analytics/missing-photos", headers=headers, params=params)
+                if response and response.status_code == 200:
+                    data = response.json()
+                    if data.get("period_days") == days_back:
+                        result.log_pass(f"Compliance report - {days_back} days period")
+                    else:
+                        result.log_fail(f"Compliance report - {days_back} days period", f"Expected period_days={days_back}, got {data.get('period_days')}")
+                else:
+                    result.log_fail(f"Compliance report - {days_back} days period", f"Status: {response.status_code if response else 'No response'}")
+            except Exception as e:
+                result.log_fail(f"Compliance report - {days_back} days period", str(e))
+    
+    # Test 4: Data structure validation
+    if admin_token:
+        try:
+            headers = {"Authorization": f"Bearer {admin_token}"}
+            response = make_request("GET", "/analytics/missing-photos", headers=headers)
+            if response and response.status_code == 200:
+                data = response.json()
+                
+                if data["report"]:  # If there are employees in the report
+                    employee_record = data["report"][0]
+                    required_employee_fields = [
+                        "employee_id", "employee_name", "missing_lacres", "missing_medidor",
+                        "total_missing_lacres", "total_missing_medidor", "total_missing",
+                        "lacre_compliance", "medidor_compliance", "overall_compliance"
+                    ]
+                    
+                    missing_fields = [field for field in required_employee_fields if field not in employee_record]
+                    
+                    if not missing_fields:
+                        # Check missing photos structure if present
+                        structure_valid = True
+                        
+                        if employee_record["missing_lacres"]:
+                            lacre_record = employee_record["missing_lacres"][0]
+                            required_lacre_fields = ["date", "date_formatted", "weekday"]
+                            if any(field not in lacre_record for field in required_lacre_fields):
+                                structure_valid = False
+                        
+                        if employee_record["missing_medidor"]:
+                            medidor_record = employee_record["missing_medidor"][0]
+                            required_medidor_fields = ["date", "date_formatted", "period", "weekday"]
+                            if any(field not in medidor_record for field in required_medidor_fields):
+                                structure_valid = False
+                        
+                        if structure_valid:
+                            result.log_pass("Compliance report - Data structure validation")
+                        else:
+                            result.log_fail("Compliance report - Data structure validation", "Missing fields in missing photos records")
+                    else:
+                        result.log_fail("Compliance report - Data structure validation", f"Missing employee fields: {missing_fields}")
+                else:
+                    result.log_pass("Compliance report - Data structure validation (empty report)")
+            else:
+                result.log_fail("Compliance report - Data structure validation", f"Status: {response.status_code if response else 'No response'}")
+        except Exception as e:
+            result.log_fail("Compliance report - Data structure validation", str(e))
+    
+    # Test 5: Verify 'teste' user exclusion
+    if admin_token:
+        try:
+            headers = {"Authorization": f"Bearer {admin_token}"}
+            
+            # Get all employees first
+            employees_response = make_request("GET", "/users/employees", headers=headers)
+            compliance_response = make_request("GET", "/analytics/missing-photos", headers=headers)
+            
+            if employees_response and compliance_response and employees_response.status_code == 200 and compliance_response.status_code == 200:
+                employees = employees_response.json()
+                compliance_data = compliance_response.json()
+                
+                teste_user_exists = any(emp["username"] == "teste" for emp in employees)
+                teste_in_report = any("teste" in emp["employee_name"].lower() for emp in compliance_data["report"])
+                
+                if teste_user_exists and not teste_in_report:
+                    result.log_pass("Compliance report - 'teste' user exclusion")
+                elif not teste_user_exists:
+                    result.log_pass("Compliance report - 'teste' user exclusion (user doesn't exist)")
+                else:
+                    result.log_fail("Compliance report - 'teste' user exclusion", "teste user found in compliance report")
+            else:
+                result.log_fail("Compliance report - 'teste' user exclusion", "Could not retrieve employees or compliance data")
+        except Exception as e:
+            result.log_fail("Compliance report - 'teste' user exclusion", str(e))
+
 def test_api_root(result):
     """Test API root endpoint"""
     print("\n🏠 Testing API Root...")
