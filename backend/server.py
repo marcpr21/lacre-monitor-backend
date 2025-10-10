@@ -148,7 +148,7 @@ def check_photo_schedule(photo_type: str) -> dict:
     current_time = hour * 60 + minute  # Minutes since midnight
     
     if photo_type == "lacre":
-        # Monday(0), Wednesday(2), Friday(4) until 12:00 PM
+        # Monday(0), Wednesday(2), Friday(4) from 06:00 to 12:00
         if weekday not in [0, 2, 4]:
             return {
                 "allowed": False,
@@ -157,7 +157,19 @@ def check_photo_schedule(photo_type: str) -> dict:
                 "period_code": ""
             }
         
-        if current_time > 12 * 60:  # After 12:00 PM
+        # Check time window: 06:00 to 12:00
+        lacre_start = 6 * 60   # 06:00
+        lacre_end = 12 * 60    # 12:00
+        
+        if current_time < lacre_start:  # Before 06:00 AM
+            return {
+                "allowed": False,
+                "message": "Fotos de lacre só podem ser tiradas a partir das 06:00",
+                "period": "",
+                "period_code": ""
+            }
+        
+        if current_time > lacre_end:  # After 12:00 PM
             return {
                 "allowed": False,
                 "message": "Fotos de lacre devem ser tiradas até 12:00",
@@ -169,7 +181,7 @@ def check_photo_schedule(photo_type: str) -> dict:
         return {
             "allowed": True,
             "message": "Horário válido",
-            "period": f"{day_names[weekday]} até 12:00",
+            "period": f"{day_names[weekday]} 06:00-12:00",
             "period_code": f"lacre_{weekday}"
         }
     
