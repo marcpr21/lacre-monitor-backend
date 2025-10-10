@@ -1502,4 +1502,47 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  imageViewerFooter: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingBottom: 32,
+  },
+  imageViewerInfo: {
+    alignItems: 'center',
+  },
+  imageViewerText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  imageViewerSubText: {
+    color: '#E0E0E0',
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  zoomIndicator: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 40,
+  },
+  zoomText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  imageContainer: {
+    position: 'relative',
+  },
 });
