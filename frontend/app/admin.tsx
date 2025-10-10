@@ -301,7 +301,7 @@ export default function Admin() {
         </TouchableOpacity>
       </View>
 
-      {showFilters && (
+      {showFilters && activeTab === 'photos' && (
         <View style={styles.filterContainer}>
           <Text style={styles.filterLabel}>Tipo de Foto:</Text>
           <View style={styles.filterButtons}>
