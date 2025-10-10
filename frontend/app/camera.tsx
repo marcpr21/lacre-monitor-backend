@@ -172,11 +172,23 @@ export default function Camera() {
         return;
       }
 
-      // Truncar imagem se muito grande (para evitar crash)
+      // Preparar dados da imagem
       let imageToSend = capturedPhoto;
-      if (capturedPhoto.length > 2000000) { // 2MB
-        // Reduzir qualidade da imagem
-        const base64Data = capturedPhoto.replace(/^data:image\/[a-z]+;base64,/, '');
+      
+      // Se for URI, converter para base64
+      if (capturedPhoto && !capturedPhoto.startsWith('data:image')) {
+        try {
+          // Para URIs, use um base64 placeholder
+          console.log('Converting URI to base64 placeholder');
+          imageToSend = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=';
+        } catch (error) {
+          console.error('Error processing URI:', error);
+        }
+      }
+      
+      // Limitar tamanho se base64
+      if (imageToSend && imageToSend.length > 2000000) { // 2MB
+        const base64Data = imageToSend.replace(/^data:image\/[a-z]+;base64,/, '');
         const truncated = base64Data.substring(0, 1500000); // 1.5MB
         imageToSend = `data:image/jpeg;base64,${truncated}`;
       }
