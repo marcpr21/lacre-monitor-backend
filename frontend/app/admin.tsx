@@ -395,7 +395,9 @@ export default function Admin() {
         style={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <Text style={styles.photoCount}>Total: {photos.length} fotos</Text>
+        {activeTab === 'photos' ? (
+          <>
+            <Text style={styles.photoCount}>Total: {photos.length} fotos</Text>
 
         {(() => {
           // Group photos by date
