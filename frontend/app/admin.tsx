@@ -82,6 +82,9 @@ export default function Admin() {
   const [complianceLoading, setComplianceLoading] = useState(false);
   const [compliancePeriod, setCompliancePeriod] = useState(30);
   const [expandedCompliance, setExpandedCompliance] = useState<Set<string>>(new Set());
+  
+  // Debug log to check if component is re-rendering
+  console.log('Admin component rendered, activeTab:', activeTab);
 
   useEffect(() => {
     if (user?.role !== 'admin') {
