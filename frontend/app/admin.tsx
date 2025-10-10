@@ -125,7 +125,9 @@ export default function Admin() {
         params,
       });
 
-      setPhotos(response.data.photos || []);
+      // Backend Railway retorna as fotos diretamente, não em .photos
+      const photos = response.data.photos || response.data || [];
+      setPhotos(Array.isArray(photos) ? photos : []);
     } catch (error) {
       console.error('Error loading photos:', error);
       setPhotos([]); // Ensure photos is always an array
