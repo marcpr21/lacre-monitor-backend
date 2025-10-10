@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +7,11 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 import uuid
-from datetime import datetime
-
+from datetime import datetime, timedelta
+import bcrypt
+import jwt
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,38 +21,346 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
+# JWT Configuration
+JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-in-production')
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24 * 7  # 1 week
 
-# Create a router with the /api prefix
+# Security
+security = HTTPBearer()
+
+# Create the main app
+app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+# ==================== MODELS ====================
 
-# Define Models
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    name: str
+    role: str = "employee"  # employee or admin
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class UserLogin(BaseModel):
+    username: str
+    password: str
 
-# Add your routes to the router instead of directly to app
+class UserResponse(BaseModel):
+    id: str
+    username: str
+    name: str
+    role: str
+
+class LoginResponse(BaseModel):
+    token: str
+    user: UserResponse
+
+class PhotoSubmit(BaseModel):
+    photo_type: str  # "lacre" or "medidor"
+    image_base64: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    location_name: Optional[str] = None
+
+class PhotoResponse(BaseModel):
+    id: str
+    employee_id: str
+    employee_name: str
+    photo_type: str
+    image_base64: str
+    timestamp: datetime
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    location_name: Optional[str] = None
+    scheduled_period: str  # e.g., "Segunda 06:00-12:00"
+
+class PhotoListResponse(BaseModel):
+    photos: List[PhotoResponse]
+    total: int
+
+# ==================== HELPER FUNCTIONS ====================
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+def create_token(user_id: str, username: str, role: str) -> str:
+    payload = {
+        "user_id": user_id,
+        "username": username,
+        "role": role,
+        "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("user_id")
+        
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        return user
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+def check_photo_schedule(photo_type: str) -> dict:
+    """Check if photo can be taken at current time and return schedule info"""
+    now = datetime.now()
+    weekday = now.weekday()  # 0=Monday, 6=Sunday
+    hour = now.hour
+    minute = now.minute
+    current_time = hour * 60 + minute  # Minutes since midnight
+    
+    if photo_type == "lacre":
+        # Monday(0), Wednesday(2), Friday(4) until 12:00 PM
+        if weekday not in [0, 2, 4]:
+            return {
+                "allowed": False,
+                "message": "Fotos de lacre só podem ser tiradas em Segunda, Quarta e Sexta",
+                "period": ""
+            }
+        
+        if current_time > 12 * 60:  # After 12:00 PM
+            return {
+                "allowed": False,
+                "message": "Fotos de lacre devem ser tiradas até 12:00",
+                "period": ""
+            }
+        
+        day_names = {0: "Segunda", 2: "Quarta", 4: "Sexta"}
+        return {
+            "allowed": True,
+            "message": "Horário válido",
+            "period": f"{day_names[weekday]} até 12:00"
+        }
+    
+    elif photo_type == "medidor":
+        # Daily, twice: 06:00-09:00 and 17:00-18:00
+        morning_start = 6 * 60  # 06:00
+        morning_end = 9 * 60    # 09:00
+        evening_start = 17 * 60 # 17:00
+        evening_end = 18 * 60   # 18:00
+        
+        if morning_start <= current_time <= morning_end:
+            return {
+                "allowed": True,
+                "message": "Horário válido - Período manhã",
+                "period": "Manhã 06:00-09:00"
+            }
+        elif evening_start <= current_time <= evening_end:
+            return {
+                "allowed": True,
+                "message": "Horário válido - Período tarde",
+                "period": "Tarde 17:00-18:00"
+            }
+        else:
+            return {
+                "allowed": False,
+                "message": "Fotos de medidor devem ser tiradas entre 06:00-09:00 ou 17:00-18:00",
+                "period": ""
+            }
+    
+    return {"allowed": False, "message": "Tipo de foto inválido", "period": ""}
+
+# ==================== ROUTES ====================
+
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Photo Monitoring API", "version": "1.0"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+# User Registration (Admin can create employees)
+@api_router.post("/users/register", response_model=UserResponse)
+async def register_user(user: UserCreate):
+    # Check if username exists
+    existing = await db.users.find_one({"username": user.username})
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    user_id = str(uuid.uuid4())
+    hashed_pw = hash_password(user.password)
+    
+    user_doc = {
+        "id": user_id,
+        "username": user.username,
+        "password": hashed_pw,
+        "name": user.name,
+        "role": user.role,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    return UserResponse(
+        id=user_id,
+        username=user.username,
+        name=user.name,
+        role=user.role
+    )
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+# User Login
+@api_router.post("/users/login", response_model=LoginResponse)
+async def login(credentials: UserLogin):
+    user = await db.users.find_one({"username": credentials.username})
+    
+    if not user or not verify_password(credentials.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    token = create_token(user["id"], user["username"], user["role"])
+    
+    return LoginResponse(
+        token=token,
+        user=UserResponse(
+            id=user["id"],
+            username=user["username"],
+            name=user["name"],
+            role=user["role"]
+        )
+    )
+
+# Get current user info
+@api_router.get("/users/me", response_model=UserResponse)
+async def get_me(current_user = Depends(get_current_user)):
+    return UserResponse(
+        id=current_user["id"],
+        username=current_user["username"],
+        name=current_user["name"],
+        role=current_user["role"]
+    )
+
+# Submit Photo
+@api_router.post("/photos/submit")
+async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_user)):
+    # Check schedule
+    schedule_check = check_photo_schedule(photo.photo_type)
+    
+    if not schedule_check["allowed"]:
+        raise HTTPException(status_code=400, detail=schedule_check["message"])
+    
+    photo_id = str(uuid.uuid4())
+    
+    photo_doc = {
+        "id": photo_id,
+        "employee_id": current_user["id"],
+        "employee_name": current_user["name"],
+        "photo_type": photo.photo_type,
+        "image_base64": photo.image_base64,
+        "timestamp": datetime.utcnow(),
+        "latitude": photo.latitude,
+        "longitude": photo.longitude,
+        "location_name": photo.location_name,
+        "scheduled_period": schedule_check["period"],
+        "expires_at": datetime.utcnow() + timedelta(days=15)  # Auto-delete after 15 days
+    }
+    
+    await db.photos.insert_one(photo_doc)
+    
+    return {
+        "success": True,
+        "photo_id": photo_id,
+        "message": "Foto enviada com sucesso!",
+        "period": schedule_check["period"]
+    }
+
+# Get Photos (for Admin)
+@api_router.get("/photos", response_model=PhotoListResponse)
+async def get_photos(
+    current_user = Depends(get_current_user),
+    employee_id: Optional[str] = None,
+    photo_type: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    limit: int = 100
+):
+    # Only admins can view all photos
+    if current_user["role"] != "admin":
+        # Employees can only see their own photos
+        employee_id = current_user["id"]
+    
+    # Build query
+    query = {}
+    
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    if photo_type:
+        query["photo_type"] = photo_type
+    
+    if start_date:
+        if "timestamp" not in query:
+            query["timestamp"] = {}
+        query["timestamp"]["$gte"] = datetime.fromisoformat(start_date)
+    
+    if end_date:
+        if "timestamp" not in query:
+            query["timestamp"] = {}
+        query["timestamp"]["$lte"] = datetime.fromisoformat(end_date)
+    
+    # Get photos
+    photos = await db.photos.find(query).sort("timestamp", -1).limit(limit).to_list(limit)
+    
+    photo_list = [
+        PhotoResponse(
+            id=p["id"],
+            employee_id=p["employee_id"],
+            employee_name=p["employee_name"],
+            photo_type=p["photo_type"],
+            image_base64=p["image_base64"],
+            timestamp=p["timestamp"],
+            latitude=p.get("latitude"),
+            longitude=p.get("longitude"),
+            location_name=p.get("location_name"),
+            scheduled_period=p["scheduled_period"]
+        )
+        for p in photos
+    ]
+    
+    return PhotoListResponse(photos=photo_list, total=len(photo_list))
+
+# Check schedule (for frontend to show what's due)
+@api_router.get("/photos/check-schedule")
+async def check_schedule(photo_type: str):
+    schedule_info = check_photo_schedule(photo_type)
+    return schedule_info
+
+# Get all employees (for admin)
+@api_router.get("/users/employees", response_model=List[UserResponse])
+async def get_employees(current_user = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    employees = await db.users.find({"role": "employee"}).to_list(100)
+    
+    return [
+        UserResponse(
+            id=e["id"],
+            username=e["username"],
+            name=e["name"],
+            role=e["role"]
+        )
+        for e in employees
+    ]
+
+# Cleanup expired photos (can be called by cron job)
+@api_router.post("/photos/cleanup")
+async def cleanup_expired_photos(current_user = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.photos.delete_many({"expires_at": {"$lt": datetime.utcnow()}})
+    
+    return {
+        "success": True,
+        "deleted_count": result.deleted_count,
+        "message": f"{result.deleted_count} fotos expiradas foram deletadas"
+    }
 
 # Include the router in the main app
 app.include_router(api_router)
