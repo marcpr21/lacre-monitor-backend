@@ -458,15 +458,6 @@ export default function Admin() {
             new Date(b).getTime() - new Date(a).getTime()
           );
 
-          if (sortedDates.length === 0) {
-            return (
-              <View style={styles.emptyState}>
-                <Ionicons name="images-outline" size={64} color="#ccc" />
-                <Text style={styles.emptyText}>Nenhuma foto encontrada</Text>
-              </View>
-            );
-          }
-
           return sortedDates.map((dateKey) => {
             const datePhotos = groupedPhotos[dateKey];
             const date = new Date(dateKey + 'T12:00:00'); // Avoid timezone issues
