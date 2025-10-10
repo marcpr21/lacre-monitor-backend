@@ -431,8 +431,8 @@ export default function Admin() {
                         </View>
                       )}
 
-                      {/* Medidor Photos */}
-                      {medidorPhotos.length > 0 && (
+                      {/* Medidor Photos - Only show if employee is expanded */}
+                      {isEmployeeExpanded && medidorPhotos.length > 0 && (
                         <View style={styles.typeSection}>
                           <View style={styles.typeSectionHeader}>
                             <Ionicons name="speedometer" size={16} color="#4ECDC4" />
