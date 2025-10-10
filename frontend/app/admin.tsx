@@ -881,7 +881,7 @@ export default function Admin() {
               </View>
             </ScrollView>
           )}
-        </SafeAreaView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
