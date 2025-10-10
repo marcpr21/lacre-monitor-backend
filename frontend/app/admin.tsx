@@ -268,7 +268,7 @@ export default function Admin() {
         </View>
       </View>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation - Compliance Report Feature */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'photos' && styles.activeTab]}
