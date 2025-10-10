@@ -33,7 +33,7 @@ class PhotoSubmission(BaseModel):
     location_name: Optional[str] = None
 
 USERS = {
-    "admin": {"id": "1", "username": "admin", "name": "Administrador", "password": "admin123", "role": "admin"},
+    "admin": {"id": "1", "username": "admin", "name": "Administrador", "password": "prime123", "role": "admin"},
     "teste": {"id": "2", "username": "teste", "name": "Funcionario Teste", "password": "123456", "role": "employee"}
 }
 
