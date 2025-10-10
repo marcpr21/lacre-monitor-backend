@@ -517,6 +517,9 @@ export default function Admin() {
                 {/* Employee Groups - Only show if expanded */}
                 {isExpanded && sortedEmployees.map((employeeId) => {
                   const employeePhotos = employeeGroups[employeeId];
+                  if (!employeePhotos || !Array.isArray(employeePhotos) || employeePhotos.length === 0) {
+                    return null;
+                  }
                   const employeeName = employeePhotos[0].employee_name;
                   
                   // Group by photo type within employee
