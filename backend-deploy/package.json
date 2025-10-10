@@ -1,0 +1,9 @@
+{
+  "name": "lacre-monitor-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Lacre Monitor mobile app",
+  "main": "main.py",
+  "scripts": {
+    "start": "python main.py"
+  }
+}
