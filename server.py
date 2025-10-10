@@ -316,16 +316,3 @@ async def get_missing_photos(authorization: str = Header(None)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-📋 Para aplicar:
-
-    Vá ao GitHub no repositório lacre-monitor-backend
-    Clique no arquivo server.py
-    Clique no ícone de lápis (Edit)
-    Apague TODO o conteúdo atual
-    Cole o código acima
-    Clique em "Commit changes"
-    Aguarde ~2 minutos para o Railway fazer redeploy
-
-Agora você deve conseguir criar usuários no painel admin! ✅
-Oct 10, 06:23 PM
