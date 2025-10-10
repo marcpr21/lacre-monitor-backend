@@ -57,6 +57,44 @@ def validate_token(authorization: str = Header(None)):
     token = authorization.replace("Bearer ", "")
     if not token or len(token) < 10:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
+    if "admin" in token:
+        return USERS["admin"]
+    else:
+        return USERS["teste"]
+
+# Rotas básicas
+@app.get("/")
+async def root():
+    current_time = get_brazil_time()
+    return {
+        "message": "Lacre Monitor API Online!", 
+        "status": "success",
+        "brazil_time": current_time.strftime("%H:%M:%S %d/%m/%Y")
+    }
+
+@app.get("/api/health")
+async def health():
+    return {"status": "healthy", "users": len(USERS), "photos": len(PHOTOS)}
+
+@app.post("/api/users/login")
+async def login(user_data: UserLogin):
+    print(f"Login attempt: {user_data.username}")
+    
+    user = USERS.get(user_data.username)
+    if not user or user["password"] != user_data.password:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    return {
+        "token": f"fake-jwt-{user['username']}-123456789",
+        "user": {
+            "id": user["id"],
+            "username": user["username"],
+            "name": user["name"],
+            "role": user["role"]
+        }
+    }
+
 @app.post("/api/users/create")
 async def create_user(user_data: dict, authorization: str = Header(None)):
     try:
@@ -178,43 +216,7 @@ async def delete_user(user_id: str, authorization: str = Header(None)):
         raise
     except Exception as e:
         print(f"Error deleting user: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")    
-    if "admin" in token:
-        return USERS["admin"]
-    else:
-        return USERS["teste"]
-
-# Rotas básicas
-@app.get("/")
-async def root():
-    current_time = get_brazil_time()
-    return {
-        "message": "Lacre Monitor API Online!", 
-        "status": "success",
-        "brazil_time": current_time.strftime("%H:%M:%S %d/%m/%Y")
-    }
-
-@app.get("/api/health")
-async def health():
-    return {"status": "healthy", "users": len(USERS), "photos": len(PHOTOS)}
-
-@app.post("/api/users/login")
-async def login(user_data: UserLogin):
-    print(f"Login attempt: {user_data.username}")
-    
-    user = USERS.get(user_data.username)
-    if not user or user["password"] != user_data.password:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    return {
-        "token": f"fake-jwt-{user['username']}-123456789",
-        "user": {
-            "id": user["id"],
-            "username": user["username"],
-            "name": user["name"],
-            "role": user["role"]
-        }
-    }
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/api/photos/submit")
 async def submit_photo(photo_data: PhotoSubmission, authorization: str = Header(None)):
@@ -314,3 +316,16 @@ async def get_missing_photos(authorization: str = Header(None)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+📋 Para aplicar:
+
+    Vá ao GitHub no repositório lacre-monitor-backend
+    Clique no arquivo server.py
+    Clique no ícone de lápis (Edit)
+    Apague TODO o conteúdo atual
+    Cole o código acima
+    Clique em "Commit changes"
+    Aguarde ~2 minutos para o Railway fazer redeploy
+
+Agora você deve conseguir criar usuários no painel admin! ✅
+Oct 10, 06:23 PM
