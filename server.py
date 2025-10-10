@@ -1,33 +1,25 @@
-(from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import FastAPI, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
-import logging
 from pydantic import BaseModel
-from typing import List, Optional
-import uuid
-from datetime import datetime, timedelta
 import bcrypt
 import jwt
+from datetime import datetime, timedelta
 
-# MongoDB connection
+# Configurações
 mongo_url = os.environ.get('MONGODB_URL', 'mongodb://localhost:27017')
 db_name = os.environ.get('MONGODB_DATABASE', 'lacre_monitor')
+JWT_SECRET = os.environ.get('JWT_SECRET', 'secret-key')
+
+# Conectar MongoDB
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 
-# JWT Configuration
-JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key')
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_HOURS = 24 * 7
+# App FastAPI
+app = FastAPI(title="Lacre Monitor API")
 
-# Security
-security = HTTPBearer()
-
-app = FastAPI(title="Lacre Monitor API", version="1.0.0")
-
-# CORS middleware
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,77 +28,54 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API Router
-router = APIRouter(prefix="/api")
-
-# Pydantic models
+# Modelos
 class UserLogin(BaseModel):
     username: str
     password: str
 
-class UserResponse(BaseModel):
-    id: str
-    username: str
-    name: str
-    role: str
+# Rotas
+@app.get("/")
+async def root():
+    return {"message": "Lacre Monitor API is running"}
 
-# Authentication
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user_id = payload.get("user_id")
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        user = await db.users.find_one({"id": user_id})
-        if user is None:
-            raise HTTPException(status_code=401, detail="User not found")
-        
-        return user
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+@app.get("/api/health")
+async def health():
+    return {"status": "healthy"}
 
-# Routes
-@router.post("/users/login")
+@app.post("/api/users/login")
 async def login(user_data: UserLogin):
+    # Buscar usuário
     user = await db.users.find_one({"username": user_data.username})
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Verificar senha
     if not bcrypt.checkpw(user_data.password.encode('utf-8'), user['password'].encode('utf-8')):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Criar token
     payload = {
         "user_id": user["id"],
         "username": user["username"],
         "role": user["role"],
-        "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+        "exp": datetime.utcnow() + timedelta(hours=168)
     }
-    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
     
     return {
         "token": token,
         "user": {
             "id": user["id"],
-            "username": user["username"],
+            "username": user["username"], 
             "name": user["name"],
             "role": user["role"]
         }
     }
 
-@router.get("/health")
-async def health_check():
-    return {"status": "healthy", "message": "API is running"}
-
-# Include router
-app.include_router(router)
-
-# Startup event
 @app.on_event("startup")
-async def startup_db_client():
-    print("Connected to MongoDB")
+async def startup():
+    print("API Started")
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
+@app.on_event("shutdown") 
+async def shutdown():
     client.close()
-)
