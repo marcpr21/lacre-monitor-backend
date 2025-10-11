@@ -1519,6 +1519,7 @@ const styles = StyleSheet.create({
   },
   imageViewerInfo: {
     alignItems: 'center',
+    marginBottom: 16,
   },
   imageViewerText: {
     color: '#FFF',
@@ -1530,6 +1531,10 @@ const styles = StyleSheet.create({
     color: '#E0E0E0',
     fontSize: 14,
     marginBottom: 2,
+  },
+  imageViewerCloseButton: {
+    alignSelf: 'center',
+    padding: 8,
   },
   zoomIndicator: {
     position: 'absolute',
