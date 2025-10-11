@@ -229,6 +229,110 @@ async def get_all_users(current_user = Depends(get_current_user)):
     ]
     return all_users
 
+@api_router.post("/users", response_model=UserResponse)
+async def create_user(user_data: UserCreate, current_user = Depends(get_current_user)):
+    """Create a new user (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    # Check if username already exists
+    if user_data.username in USERS:
+        raise HTTPException(status_code=400, detail="Usuário já existe")
+    
+    # Hash password
+    hashed_password = bcrypt.hashpw(user_data.password.encode('utf-8'), bcrypt.gensalt())
+    
+    # Create user
+    user_id = str(uuid.uuid4())
+    USERS[user_data.username] = {
+        "id": user_id,
+        "username": user_data.username,
+        "password": hashed_password,
+        "name": user_data.name,
+        "role": user_data.role
+    }
+    
+    return UserResponse(
+        id=user_id,
+        username=user_data.username,
+        name=user_data.name,
+        role=user_data.role
+    )
+
+@api_router.put("/users/{user_id}", response_model=UserResponse)
+async def update_user(user_id: str, user_data: UserCreate, current_user = Depends(get_current_user)):
+    """Update a user (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    # Find user by ID
+    user_to_update = None
+    for username, user in USERS.items():
+        if user["id"] == user_id:
+            user_to_update = user
+            old_username = username
+            break
+    
+    if not user_to_update:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    # Update user data
+    if user_data.password:
+        user_to_update["password"] = bcrypt.hashpw(user_data.password.encode('utf-8'), bcrypt.gensalt())
+    
+    user_to_update["name"] = user_data.name
+    user_to_update["role"] = user_data.role
+    
+    # If username changed, update key
+    if user_data.username != old_username:
+        if user_data.username in USERS:
+            raise HTTPException(status_code=400, detail="Nome de usuário já existe")
+        USERS[user_data.username] = user_to_update
+        user_to_update["username"] = user_data.username
+        del USERS[old_username]
+    
+    return UserResponse(
+        id=user_to_update["id"],
+        username=user_to_update["username"],
+        name=user_to_update["name"],
+        role=user_to_update["role"]
+    )
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, current_user = Depends(get_current_user)):
+    """Delete a user (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    # Find and delete user
+    for username, user in list(USERS.items()):
+        if user["id"] == user_id:
+            # Don't allow deleting admin user
+            if user["role"] == "admin":
+                raise HTTPException(status_code=400, detail="Não é possível deletar usuário administrador")
+            del USERS[username]
+            return {"success": True, "message": "Usuário deletado com sucesso"}
+    
+    raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+@api_router.post("/users/{user_id}/reset-password")
+async def reset_password(user_id: str, new_password: dict, current_user = Depends(get_current_user)):
+    """Reset user password (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    password = new_password.get("password")
+    if not password:
+        raise HTTPException(status_code=400, detail="Senha não fornecida")
+    
+    # Find user by ID
+    for username, user in USERS.items():
+        if user["id"] == user_id:
+            user["password"] = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            return {"success": True, "message": "Senha alterada com sucesso"}
+    
+    raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
 @api_router.get("/photos/check-schedule")
 async def check_schedule(photo_type: str, current_user = Depends(get_current_user)):
     """Check if current time allows photo submission"""
