@@ -919,29 +919,38 @@ export default function Admin() {
       </Modal>
 
       {/* Image Viewer with Pinch-to-Zoom (Instagram-like) */}
-      {selectedPhoto && (
-        <ImageView
-          images={[{ uri: selectedPhoto.image_base64 }]}
-          imageIndex={imageViewerIndex}
-          visible={imageViewerVisible}
-          onRequestClose={() => setImageViewerVisible(false)}
-          FooterComponent={({ imageIndex }) => (
-            <View style={styles.imageViewerFooter}>
-              <View style={styles.imageViewerInfo}>
-                <Text style={styles.imageViewerText}>
-                  {selectedPhoto.employee_name}
-                </Text>
-                <Text style={styles.imageViewerSubText}>
-                  {selectedPhoto.photo_type === 'lacre' ? 'Lacre' : 'Medidor'} - {selectedPhoto.scheduled_period}
-                </Text>
-                <Text style={styles.imageViewerSubText}>
-                  {formatDate(selectedPhoto.timestamp)}
-                </Text>
+      <Modal visible={imageViewerVisible} transparent={true} onRequestClose={() => setImageViewerVisible(false)}>
+        {selectedPhoto && (
+          <ImageViewer
+            imageUrls={[{ url: selectedPhoto.image_base64 }]}
+            index={imageViewerIndex}
+            onSwipeDown={() => setImageViewerVisible(false)}
+            enableSwipeDown={true}
+            backgroundColor="rgba(0, 0, 0, 0.9)"
+            renderFooter={() => (
+              <View style={styles.imageViewerFooter}>
+                <View style={styles.imageViewerInfo}>
+                  <Text style={styles.imageViewerText}>
+                    {selectedPhoto.employee_name}
+                  </Text>
+                  <Text style={styles.imageViewerSubText}>
+                    {selectedPhoto.photo_type === 'lacre' ? 'Lacre' : 'Medidor'} - {selectedPhoto.scheduled_period}
+                  </Text>
+                  <Text style={styles.imageViewerSubText}>
+                    {formatDate(selectedPhoto.timestamp)}
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.imageViewerCloseButton}
+                  onPress={() => setImageViewerVisible(false)}
+                >
+                  <Ionicons name="close-circle" size={40} color="#FFF" />
+                </TouchableOpacity>
               </View>
-            </View>
-          )}
-        />
-      )}
+            )}
+          />
+        )}
+      </Modal>
     </SafeAreaView>
   );
 }
