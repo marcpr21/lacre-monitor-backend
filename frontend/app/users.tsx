@@ -58,7 +58,7 @@ export default function Users() {
   const loadUsers = async () => {
     try {
       const token = await getAuthToken();
-      const response = await axios.get(`${API_URL}/api/users/all`, {
+      const response = await axios.get(`${API_URL}/api/users/employees`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(response.data);
