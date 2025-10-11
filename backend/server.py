@@ -40,6 +40,14 @@ def get_brazil_time():
     """Get current time in Brazil timezone (UTC-3)"""
     return datetime.now(ZoneInfo("America/Sao_Paulo"))
 
+def convert_utc_to_brazil(utc_datetime):
+    """Convert UTC datetime to Brazil timezone"""
+    if utc_datetime.tzinfo is None:
+        # If naive datetime (from MongoDB), assume it's UTC
+        utc_datetime = utc_datetime.replace(tzinfo=ZoneInfo("UTC"))
+    # Convert to Brazil timezone
+    return utc_datetime.astimezone(ZoneInfo("America/Sao_Paulo"))
+
 # ==================== MODELS ====================
 
 class UserCreate(BaseModel):
