@@ -200,8 +200,12 @@ export default function Admin() {
 
   const openImageViewer = (photo: Photo) => {
     setSelectedPhoto(photo);
-    setImageViewerIndex(0);
-    setImageViewerVisible(true);
+    setShowModal(false); // Close details modal first
+    // Small delay to let modal close animation finish
+    setTimeout(() => {
+      setImageViewerIndex(0);
+      setImageViewerVisible(true);
+    }, 300);
   };
 
   const applyFilters = async () => {
