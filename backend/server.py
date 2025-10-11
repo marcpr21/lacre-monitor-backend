@@ -485,11 +485,14 @@ async def get_photos(
             employee_name=p["employee_name"],
             photo_type=p["photo_type"],
             image_base64=p["image_base64"],
-            timestamp=p["timestamp"],
+            timestamp=convert_utc_to_brazil(p["timestamp"]),
             latitude=p.get("latitude"),
             longitude=p.get("longitude"),
             location_name=p.get("location_name"),
-            scheduled_period=p["scheduled_period"]
+            scheduled_period=p["scheduled_period"],
+            seal_location_id=p.get("seal_location_id"),
+            seal_location_name=p.get("seal_location_name"),
+            seal_number=p.get("seal_number")
         )
         for p in photos
     ]
