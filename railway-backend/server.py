@@ -18,10 +18,9 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-mongo_url = os.environ.get('MONGODB_URL', os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
-db_name = os.environ.get('MONGODB_DATABASE', os.environ.get('DB_NAME', 'lacre_monitor'))
+mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[db_name]
+db = client[os.environ['DB_NAME']]
 
 # JWT Configuration
 JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-in-production')
@@ -34,6 +33,20 @@ security = HTTPBearer()
 # Create the main app
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
+
+# ==================== TIMEZONE HELPER ====================
+
+def get_brazil_time():
+    """Get current time in Brazil timezone (UTC-3)"""
+    return datetime.now(ZoneInfo("America/Sao_Paulo"))
+
+def convert_utc_to_brazil(utc_datetime):
+    """Convert UTC datetime to Brazil timezone"""
+    if utc_datetime.tzinfo is None:
+        # If naive datetime (from MongoDB), assume it's UTC
+        utc_datetime = utc_datetime.replace(tzinfo=ZoneInfo("UTC"))
+    # Convert to Brazil timezone
+    return utc_datetime.astimezone(ZoneInfo("America/Sao_Paulo"))
 
 # ==================== MODELS ====================
 
@@ -264,6 +277,7 @@ async def register_user(user: UserCreate):
 
 # User Login
 @api_router.post("/users/login", response_model=LoginResponse)
+@api_router.post("/auth/login", response_model=LoginResponse)
 async def login(credentials: UserLogin):
     user = await db.users.find_one({"username": credentials.username})
     
@@ -471,11 +485,14 @@ async def get_photos(
             employee_name=p["employee_name"],
             photo_type=p["photo_type"],
             image_base64=p["image_base64"],
-            timestamp=p["timestamp"],
+            timestamp=convert_utc_to_brazil(p["timestamp"]),
             latitude=p.get("latitude"),
             longitude=p.get("longitude"),
             location_name=p.get("location_name"),
-            scheduled_period=p["scheduled_period"]
+            scheduled_period=p["scheduled_period"],
+            seal_location_id=p.get("seal_location_id"),
+            seal_location_name=p.get("seal_location_name"),
+            seal_number=p.get("seal_number")
         )
         for p in photos
     ]
