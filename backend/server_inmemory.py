@@ -216,6 +216,19 @@ async def get_employees(current_user = Depends(get_current_user)):
     ]
     return employees
 
+@api_router.get("/users/all", response_model=List[UserResponse])
+async def get_all_users(current_user = Depends(get_current_user)):
+    """Get all users (admin only) - Legacy endpoint"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    all_users = [
+        UserResponse(id=u["id"], username=u["username"], name=u["name"], role=u["role"])
+        for u in USERS.values()
+        if u["role"] == "employee"  # Return only employees for now
+    ]
+    return all_users
+
 @api_router.get("/photos/check-schedule")
 async def check_schedule(photo_type: str, current_user = Depends(get_current_user)):
     """Check if current time allows photo submission"""
