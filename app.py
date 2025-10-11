@@ -18,3 +18,4 @@ def read_root():
 @app.get("/api/")
 def api_root():
     return {"message": "API Online", "version": "1.0"}
+
