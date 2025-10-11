@@ -34,6 +34,12 @@ security = HTTPBearer()
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+# ==================== TIMEZONE HELPER ====================
+
+def get_brazil_time():
+    """Get current time in Brazil timezone (UTC-3)"""
+    return datetime.now(ZoneInfo("America/Sao_Paulo"))
+
 # ==================== MODELS ====================
 
 class UserCreate(BaseModel):
