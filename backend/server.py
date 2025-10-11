@@ -263,6 +263,7 @@ async def register_user(user: UserCreate):
 
 # User Login
 @api_router.post("/users/login", response_model=LoginResponse)
+@api_router.post("/auth/login", response_model=LoginResponse)
 async def login(credentials: UserLogin):
     user = await db.users.find_one({"username": credentials.username})
     
