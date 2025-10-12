@@ -747,6 +747,12 @@ class EmailRecipient(BaseModel):
 class EmailAlertsConfig(BaseModel):
     recipients: List[EmailRecipient] = []
 
+# Authorization Model
+class Authorization(BaseModel):
+    employee_id: str
+    photo_type: str
+    duration_hours: int = 24
+
 @api_router.put("/users/{user_id}/reset-password")
 async def reset_password(user_id: str, reset_data: PasswordReset, current_user = Depends(get_current_user)):
     if current_user["role"] != "admin":
