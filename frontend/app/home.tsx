@@ -294,12 +294,20 @@ export default function Home() {
     let filteredSchedules = scheduleData;
     const requiredPhotos = user?.required_photos || 'both';
     
+    console.log('🔍 DEBUG - User:', user?.username);
+    console.log('🔍 DEBUG - Required Photos:', requiredPhotos);
+    console.log('🔍 DEBUG - Total schedules:', scheduleData.length);
+    
     if (requiredPhotos === 'lacre') {
       // Show only lacre photos
       filteredSchedules = scheduleData.filter(s => s.type === 'lacre');
+      console.log('✅ Filtering to LACRE only - Result:', filteredSchedules.length);
     } else if (requiredPhotos === 'medidor') {
       // Show only medidor photos
       filteredSchedules = scheduleData.filter(s => s.type === 'medidor');
+      console.log('✅ Filtering to MEDIDOR only - Result:', filteredSchedules.length);
+    } else {
+      console.log('✅ Showing ALL (both) - Result:', filteredSchedules.length);
     }
     // If 'both' or undefined, show all (no filter needed)
 
