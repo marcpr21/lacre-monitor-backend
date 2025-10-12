@@ -212,6 +212,21 @@ export default function Home() {
     // CHECK IF USER IS "teste" - bypass all validations
     const isTestUser = user?.username?.toLowerCase() === 'teste';
 
+    // Fetch authorizations
+    let authorizations: any = {};
+    try {
+      const token = await getAuthToken();
+      const response = await axios.get(`${API_URL}/api/admin/authorizations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const userId = user?.id;
+      if (userId && response.data.authorizations[userId]) {
+        authorizations = response.data.authorizations[userId];
+      }
+    } catch (error) {
+      console.log('No authorizations found');
+    }
+
     // Check Lacre schedule
     const lacreDays = [1, 3, 5]; // Monday, Wednesday, Friday
     const isLacreDay = lacreDays.includes(dayOfWeek);
