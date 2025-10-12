@@ -791,19 +791,15 @@ export default function Admin() {
                           </View>
                           {employee.missing_medidor && Array.isArray(employee.missing_medidor) && employee.missing_medidor.length > 0 ? (
                             <View style={styles.missingList}>
-                              {employee.missing_medidor.slice(0, 5).map((missing, index) => (
-                                <Text key={index} style={styles.missingItem}>
-                                  • {missing.date_formatted} - {missing.period} ({missing.weekday})
+                              {employee.missing_medidor.map((missing, index) => (
+                                <Text key={index} style={styles.missingItemDescriptive}>
+                                  📅 {missing.date_formatted} ({missing.weekday}){'\n'}
+                                  ❌ Deixou de tirar a foto da medição {missing.period === 'Manhã 06:00-09:00' ? 'na parte da manhã' : 'na parte da tarde'}
                                 </Text>
                               ))}
-                              {employee.missing_medidor && employee.missing_medidor.length > 5 && (
-                                <Text style={styles.moreItems}>
-                                  +{employee.missing_medidor.length - 5} mais...
-                                </Text>
-                              )}
                             </View>
                           ) : (
-                            <Text style={styles.noMissing}>✅ Todas as fotos em dia</Text>
+                            <Text style={styles.noMissing}>✅ Todas as fotos da medição em dia</Text>
                           )}
                         </View>
                       </View>
