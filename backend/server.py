@@ -178,6 +178,7 @@ class UserResponse(BaseModel):
     username: str
     name: str
     role: str
+    required_photos: str = "both"
 
 class LoginResponse(BaseModel):
     token: str
