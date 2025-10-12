@@ -10,7 +10,8 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from './store/authStore';
+import { useAuthStore, getAuthToken } from './store/authStore';
+import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
