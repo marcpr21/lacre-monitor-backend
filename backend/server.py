@@ -731,6 +731,7 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     username: Optional[str] = None
     role: Optional[str] = None
+    required_photos: Optional[str] = None
 
 @api_router.put("/users/{user_id}", response_model=UserResponse)
 async def update_user(user_id: str, updates: UserUpdate, current_user = Depends(get_current_user)):
