@@ -418,7 +418,8 @@ async def get_me(current_user = Depends(get_current_user)):
         id=current_user["id"],
         username=current_user["username"],
         name=current_user["name"],
-        role=current_user["role"]
+        role=current_user["role"],
+        required_photos=current_user.get("required_photos", "both")
     )
 
 # Submit Photo
