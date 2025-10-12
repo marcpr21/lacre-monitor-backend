@@ -30,6 +30,11 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-in-production'
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 1 week
 
+# SendGrid Configuration
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+EMAIL_FROM = os.environ.get('EMAIL_FROM', 'noreply@example.com')
+EMAIL_FROM_NAME = os.environ.get('EMAIL_FROM_NAME', 'Lacre Monitor')
+
 # Security
 security = HTTPBearer()
 
