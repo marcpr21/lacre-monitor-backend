@@ -31,7 +31,6 @@ def init_users():
         "Posto Malvino", "Posto Marclau", "Posto Meia Noite", "Posto ML",
         "Posto Monteiro", "Posto MR", "Posto Pinheirinho", "Posto Planeta",
         "Posto Quintino", "Posto Santa Cruz", "Posto Santa Rosa", "Posto Santissimo",
-       # Usuário teste
     teste_pw = bcrypt.hashpw("teste".encode('utf-8'), bcrypt.gensalt())
     USERS["teste"] = {
         "id": str(uuid.uuid4()),
