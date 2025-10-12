@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 import uuid
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -19,9 +19,10 @@ security = HTTPBearer()
 USERS = {}
 PHOTOS = []
 
-# Initialize default users
+# Initialize users with test data
 def init_users():
     admin_pw = bcrypt.hashpw("admin123".encode('utf-8'), bcrypt.gensalt())
+    
     USERS["admin"] = {
         "id": str(uuid.uuid4()),
         "username": "admin",
@@ -29,10 +30,36 @@ def init_users():
         "name": "Administrador",
         "role": "admin"
     }
+    
+    # Create 20 test employees
+    employee_names = [
+        "Posto Fagundao", "Posto Glamour", "Posto Gloria", "Posto Laranjal",
+        "Posto Malvino", "Posto Marclau", "Posto Meia Noite", "Posto ML",
+        "Posto Monteiro", "Posto MR", "Posto Pinheirinho", "Posto Planeta",
+        "Posto Quintino", "Posto Santa Cruz", "Posto Santa Rosa", "Posto Santissimo",
+        "Posto Serraria", "Posto Souza", "Posto Sul", "Posto Vila Nova"
+    ]
+    
+    for name in employee_names:
+        emp_pw = bcrypt.hashpw("123456".encode('utf-8'), bcrypt.gensalt())
+        username = name.lower().replace(" ", "_")
+        USERS[username] = {
+            "id": str(uuid.uuid4()),
+            "username": username,
+            "password": emp_pw,
+            "name": name,
+            "role": "employee"
+        }
 
 init_users()
 
 # Models
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    name: str
+    role: str = "employee"
+
 class UserLogin(BaseModel):
     username: str
     password: str
@@ -54,6 +81,18 @@ class PhotoSubmit(BaseModel):
     longitude: Optional[float] = None
     location_name: Optional[str] = None
 
+class PhotoResponse(BaseModel):
+    id: str
+    employee_id: str
+    employee_name: str
+    photo_type: str
+    image_base64: str
+    timestamp: datetime
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    location_name: Optional[str] = None
+    scheduled_period: str
+
 # Create app
 app = FastAPI(title="Lacre Monitor API")
 
@@ -64,81 +103,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Helper functions
-def get_brazil_time():
-    return datetime.now(ZoneInfo("America/Sao_Paulo"))
-
-def create_token(user_id: str, username: str, role: str) -> str:
-    expire = datetime.utcnow() + timedelta(hours=168)
-    payload = {"user_id": user_id, "username": username, "role": role, "exp": expire}
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-def verify_token(credentials: HTTPAuthorizationCredentials):
-    try:
-        token = credentials.credentials
-        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-    except:
-        raise HTTPException(status_code=401, detail="Token inválido")
-
-# Routes
-@app.get("/")
-def root():
-    return {"message": "Lacre Monitor API Online", "status": "ok", "time": get_brazil_time().strftime("%H:%M:%S")}
-
-@app.get("/api/")
-def api_root():
-    return {"message": "API Online", "version": "1.0"}
-
-@app.post("/api/auth/login", response_model=LoginResponse)
-def login(credentials: UserLogin):
-    user = USERS.get(credentials.username)
-    if not user or not bcrypt.checkpw(credentials.password.encode('utf-8'), user["password"]):
-        raise HTTPException(status_code=401, detail="Credenciais inválidas")
-    
-    token = create_token(user["id"], user["username"], user["role"])
-    return LoginResponse(
-        token=token,
-        user=UserResponse(id=user["id"], username=user["username"], name=user["name"], role=user["role"])
-    )
-
-@app.get("/api/users/me")
-def get_me(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    payload = verify_token(credentials)
-    user = USERS.get(payload["username"])
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
-    return UserResponse(id=user["id"], username=user["username"], name=user["name"], role=user["role"])
-
-@app.post("/api/photos/submit")
-def submit_photo(photo: PhotoSubmit, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    payload = verify_token(credentials)
-    user = USERS.get(payload["username"])
-    
-    now = get_brazil_time()
-    photo_data = {
-        "id": str(uuid.uuid4()),
-        "employee_id": user["id"],
-        "employee_name": user["name"],
-        "photo_type": photo.photo_type,
-        "image_base64": photo.image_base64,
-        "timestamp": now,
-        "latitude": photo.latitude,
-        "longitude": photo.longitude,
-        "location_name": photo.location_name,
-        "scheduled_period": "Teste"
-    }
-    
-    PHOTOS.append(photo_data)
-    return {"success": True, "photo_id": photo_data["id"], "message": "Foto enviada"}
-
-@app.get("/api/photos")
-def get_photos(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    verify_token(credentials)
-    return {"photos": PHOTOS, "total": len(PHOTOS)}
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    print(f"Starting server on port {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
