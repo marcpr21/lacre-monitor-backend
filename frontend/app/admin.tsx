@@ -162,8 +162,16 @@ export default function Admin() {
         headers: { Authorization: `Bearer ${token}` },
         params: { days_back: compliancePeriod },
       });
-
-      setComplianceData(response.data.report || []);
+      const data = response.data.report || [];
+      setComplianceData(data);
+      
+      // Auto-expand cards with missing photos
+      const employeesWithMissing = new Set(
+        data
+          .filter((emp: any) => emp.total_missing > 0)
+          .map((emp: any) => emp.employee_id)
+      );
+      setExpandedCompliance(employeesWithMissing);
     } catch (error) {
       console.error('Error loading compliance data:', error);
       setComplianceData([]); // Ensure complianceData is always an array
