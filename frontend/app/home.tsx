@@ -216,13 +216,10 @@ export default function Home() {
     let authorizations: any = {};
     try {
       const token = await getAuthToken();
-      const response = await axios.get(`${API_URL}/api/admin/authorizations`, {
+      const response = await axios.get(`${API_URL}/api/my-authorizations`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const userId = user?.id;
-      if (userId && response.data.authorizations[userId]) {
-        authorizations = response.data.authorizations[userId];
-      }
+      authorizations = response.data.authorizations || {};
     } catch (error) {
       console.log('No authorizations found');
     }
