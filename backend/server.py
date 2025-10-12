@@ -853,6 +853,83 @@ async def save_email_alerts_config(config: EmailAlertsConfig, current_user = Dep
     
     return {"success": True, "message": "Configuração salva com sucesso"}
 
+# ==================== AUTHORIZATION ENDPOINTS ====================
+
+@api_router.post("/admin/authorize")
+async def authorize_photo(auth: Authorization, current_user = Depends(get_current_user)):
+    """Grant temporary photo submission authorization"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Verify employee exists
+    employee = await db.users.find_one({"id": auth.employee_id})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Funcionário não encontrado")
+    
+    # Calculate expiration time
+    expires_at = get_brazil_time() + timedelta(hours=auth.duration_hours)
+    
+    # Save authorization
+    await db.authorizations.update_one(
+        {"employee_id": auth.employee_id, "photo_type": auth.photo_type},
+        {"$set": {
+            "authorized": True,
+            "expires_at": expires_at,
+            "authorized_by": current_user["username"],
+            "created_at": get_brazil_time()
+        }},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message": f"Autorização concedida até {expires_at.strftime('%d/%m/%Y %H:%M')}"
+    }
+
+@api_router.get("/admin/authorizations")
+async def get_authorizations(current_user = Depends(get_current_user)):
+    """Get all active authorizations"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    now = get_brazil_time()
+    
+    # Get all active authorizations (not expired)
+    auths = await db.authorizations.find({
+        "expires_at": {"$gt": now}
+    }).to_list(length=1000)
+    
+    # Group by employee
+    result = {}
+    for auth in auths:
+        emp_id = auth["employee_id"]
+        if emp_id not in result:
+            result[emp_id] = {}
+        
+        result[emp_id][auth["photo_type"]] = {
+            "authorized": auth.get("authorized", True),
+            "expires_at": auth["expires_at"].isoformat(),
+            "authorized_by": auth.get("authorized_by", "admin")
+        }
+    
+    return {"authorizations": result}
+
+@api_router.delete("/admin/authorizations/{employee_id}/{photo_type}")
+async def revoke_authorization(employee_id: str, photo_type: str, current_user = Depends(get_current_user)):
+    """Revoke authorization for specific employee and photo type"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.authorizations.delete_one({
+        "employee_id": employee_id,
+        "photo_type": photo_type
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Autorização não encontrada")
+    
+    return {"success": True, "message": "Autorização revogada"}
+
 # ==================== ANALYTICS/COMPLIANCE ENDPOINTS ====================
 
 @api_router.get("/analytics/missing-photos")
