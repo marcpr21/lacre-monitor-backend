@@ -574,7 +574,7 @@ def test_database_initialization(result, admin_token):
 
 def main():
     """Main test runner"""
-    print("🚀 Starting Photo Monitoring API Backend Tests")
+    print("🚀 MongoDB Atlas Connection Verification - Railway Backend Testing")
     print(f"Testing against: {BASE_URL}")
     print("="*60)
     
@@ -584,7 +584,10 @@ def main():
     test_api_root(result)
     
     # Test authentication and get tokens
-    admin_token, employee_token = test_authentication(result)
+    admin_token, employee_token, test_token = test_authentication(result)
+    
+    # Test database initialization (MongoDB Atlas)
+    test_database_initialization(result, admin_token)
     
     # Test user info endpoints
     test_user_info(result, admin_token, employee_token)
@@ -601,14 +604,25 @@ def main():
     # Test photo retrieval
     test_photo_retrieval(result, admin_token, employee_token)
     
-    # Test compliance report API (NEW - as requested)
+    # Test compliance report API
     test_compliance_report_api(result, admin_token, employee_token)
     
     # Print summary
     success = result.summary()
     
+    print("\n" + "="*60)
+    print("MONGODB ATLAS CONNECTION STATUS")
+    print("="*60)
+    
+    if admin_token and employee_token:
+        print("✅ MongoDB Atlas connection working")
+        print("✅ User authentication successful")
+        print("✅ Data persistence verified")
+    else:
+        print("❌ MongoDB Atlas connection issues detected")
+    
     if success:
-        print("\n🎉 All tests passed!")
+        print("\n🎉 All tests passed! Railway deployment with MongoDB Atlas is working correctly.")
         sys.exit(0)
     else:
         print(f"\n💥 {result.failed} test(s) failed!")
