@@ -166,9 +166,9 @@ export default function Users() {
 
     try {
       const token = await getAuthToken();
-      await axios.put(
+      await axios.post(
         `${API_URL}/api/users/${selectedUserId}/reset-password`,
-        { new_password: newPassword },
+        { password: newPassword },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
