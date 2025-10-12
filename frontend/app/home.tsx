@@ -290,7 +290,20 @@ export default function Home() {
       color: '#5C6BC0',
     });
 
-    setSchedules(scheduleData);
+    // Filter schedules based on user's required_photos
+    let filteredSchedules = scheduleData;
+    const requiredPhotos = user?.required_photos || 'both';
+    
+    if (requiredPhotos === 'lacre') {
+      // Show only lacre photos
+      filteredSchedules = scheduleData.filter(s => s.type === 'lacre');
+    } else if (requiredPhotos === 'medidor') {
+      // Show only medidor photos
+      filteredSchedules = scheduleData.filter(s => s.type === 'medidor');
+    }
+    // If 'both' or undefined, show all (no filter needed)
+
+    setSchedules(filteredSchedules);
   };
 
   const onRefresh = async () => {
