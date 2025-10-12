@@ -83,8 +83,6 @@ def test_authentication(result):
             if "token" in data and "user" in data:
                 admin_token = data["token"]
                 result.log_pass("Admin login with valid credentials")
-                admin_token = data["token"]
-                result.log_pass("Admin login with valid credentials")
             else:
                 result.log_fail("Admin login with valid credentials", "Missing token or user in response")
                 admin_token = None
