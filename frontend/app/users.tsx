@@ -96,6 +96,7 @@ export default function Users() {
       password: '',
       name: user.name,
       role: user.role,
+      required_photos: user.required_photos || 'both',
     });
     setShowModal(true);
   };
