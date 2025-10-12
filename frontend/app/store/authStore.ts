@@ -10,6 +10,7 @@ interface User {
   username: string;
   name: string;
   role: string;
+  required_photos?: string;
 }
 
 interface AuthState {
