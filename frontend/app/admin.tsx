@@ -691,10 +691,20 @@ export default function Admin() {
           <>
             <View style={styles.complianceHeader}>
               <Text style={styles.complianceTitle}>Relatório de Conformidade</Text>
-              <Text style={styles.complianceSubtitle}>Últimos {compliancePeriod} dias</Text>
+              <Text style={styles.complianceSubtitle}>
+                {compliancePeriod === 1 ? 'Hoje' : `Últimos ${compliancePeriod} dias`}
+              </Text>
               
               {/* Period Selector */}
               <View style={styles.periodSelector}>
+                <TouchableOpacity
+                  style={[styles.periodButton, compliancePeriod === 1 && styles.periodButtonActive]}
+                  onPress={() => setCompliancePeriod(1)}
+                >
+                  <Text style={[styles.periodButtonText, compliancePeriod === 1 && styles.periodButtonTextActive]}>
+                    Hoje
+                  </Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.periodButton, compliancePeriod === 7 && styles.periodButtonActive]}
                   onPress={() => setCompliancePeriod(7)}
