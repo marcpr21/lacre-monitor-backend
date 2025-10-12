@@ -532,6 +532,46 @@ def test_api_root(result):
     except Exception as e:
         result.log_fail("API root endpoint", str(e))
 
+def test_database_initialization(result, admin_token):
+    """Test if initial users were created in MongoDB Atlas"""
+    print("\n💾 Testing Database Initialization...")
+    
+    if not admin_token:
+        result.log_fail("Database initialization check", "No admin token available")
+        return
+    
+    try:
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        response = make_request("GET", "/users/employees", headers=headers)
+        if response and response.status_code == 200:
+            employees = response.json()
+            employee_count = len(employees)
+            
+            # Check if we have the expected number of employees (20)
+            if employee_count >= 20:
+                result.log_pass(f"Database initialization - Found {employee_count} employees (expected 20+)")
+                
+                # Check for specific expected employees
+                expected_employees = [
+                    "posto_fagundao", "posto_glamour", "posto_gloria", "posto_laranjal",
+                    "posto_malvino", "posto_marclau", "posto_meia_noite", "posto_ml"
+                ]
+                
+                found_employees = [emp["username"] for emp in employees]
+                matching_employees = [emp for emp in expected_employees if emp in found_employees]
+                
+                if len(matching_employees) >= 4:  # At least half of the sample
+                    result.log_pass(f"Database initialization - Expected employees found ({len(matching_employees)}/{len(expected_employees)} sample)")
+                else:
+                    result.log_fail("Database initialization - Expected employees", f"Only found {len(matching_employees)} of expected employees")
+                    
+            else:
+                result.log_fail("Database initialization - Employee count", f"Found {employee_count} employees, expected 20+")
+        else:
+            result.log_fail("Database initialization check", f"Status: {response.status_code if response else 'No response'}")
+    except Exception as e:
+        result.log_fail("Database initialization check", str(e))
+
 def main():
     """Main test runner"""
     print("🚀 Starting Photo Monitoring API Backend Tests")
