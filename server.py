@@ -11,7 +11,7 @@ import jwt
 import os
 
 JWT_SECRET = "seu-segredo-jwt-mude-em-producao-12345"
-JWT_ALGORITHM = \"HS256\"
+JWT_ALGORITHM = "HS256"
 security = HTTPBearer()
 
 USERS = {}
