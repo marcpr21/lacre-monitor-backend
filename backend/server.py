@@ -423,11 +423,20 @@ async def get_me(current_user = Depends(get_current_user)):
 async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_user)):
     # Check for active authorization first
     now = get_brazil_time()
-    authorization = await db.authorizations.find_one({
-        "employee_id": current_user["id"],
-        "photo_type": photo.photo_type,
-        "expires_at": {"$gt": now}
-    })
+    
+    # For medidor photos, check both medidor_manha and medidor_tarde authorizations
+    if photo.photo_type == "medidor":
+        authorization = await db.authorizations.find_one({
+            "employee_id": current_user["id"],
+            "photo_type": {"$in": ["medidor", "medidor_manha", "medidor_tarde"]},
+            "expires_at": {"$gt": now}
+        })
+    else:
+        authorization = await db.authorizations.find_one({
+            "employee_id": current_user["id"],
+            "photo_type": photo.photo_type,
+            "expires_at": {"$gt": now}
+        })
     
     # If no authorization, check normal schedule
     if not authorization:
