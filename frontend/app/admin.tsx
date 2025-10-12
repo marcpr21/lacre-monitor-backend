@@ -748,7 +748,7 @@ export default function Admin() {
                             <Text style={styles.complianceBadgeText}>{employee.overall_compliance}%</Text>
                           </View>
                           <Text style={styles.complianceMissing}>
-                            {employee.total_missing} foto{employee.total_missing !== 1 ? 's' : ''} perdida{employee.total_missing !== 1 ? 's' : ''}
+                            {employee.total_missing} falta{employee.total_missing !== 1 ? 's' : ''}
                           </Text>
                         </View>
                       </View>
