@@ -948,6 +948,28 @@ async def get_authorizations(current_user = Depends(get_current_user)):
     
     return {"authorizations": result}
 
+@api_router.get("/my-authorizations")
+async def get_my_authorizations(current_user = Depends(get_current_user)):
+    """Get current user's active authorizations"""
+    now = get_brazil_time()
+    
+    # Get authorizations for current user
+    auths = await db.authorizations.find({
+        "employee_id": current_user["id"],
+        "expires_at": {"$gt": now}
+    }).to_list(length=100)
+    
+    # Format response
+    result = {}
+    for auth in auths:
+        result[auth["photo_type"]] = {
+            "authorized": auth.get("authorized", True),
+            "expires_at": auth["expires_at"].isoformat(),
+            "authorized_by": auth.get("authorized_by", "admin")
+        }
+    
+    return {"authorizations": result}
+
 @api_router.delete("/admin/authorizations/{employee_id}/{photo_type}")
 async def revoke_authorization(employee_id: str, photo_type: str, current_user = Depends(get_current_user)):
     """Revoke authorization for specific employee and photo type"""
