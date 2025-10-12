@@ -277,10 +277,35 @@ metadata:
   test_sequence: 1
   run_ui: false
 
+  - task: "Autorizações UI (Photo Authorization Screen)"
+    implemented: false
+    working: "NA"
+    file: "frontend/app/authorizations.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Pending implementation. Need to create UI for managing temporary photo authorizations. Should include employee list, photo type selectors (lacre, medidor manhã, medidor tarde), date/time pickers, and integration with /api/admin/authorize, /api/admin/authorizations, and /api/admin/authorizations/{employee_id}/{photo_type} endpoints."
+
+  - task: "Configurar Alertas UI (Email Alerts Configuration Screen)"
+    implemented: false
+    working: "NA"
+    file: "frontend/app/alerts.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Pending implementation. Need to create UI for configuring email alerts. Should include admin email input, enable/disable toggle, employee selector, photo type selector, and integration with /api/admin/email-alerts/config endpoints (GET and POST)."
+
 test_plan:
   current_focus:
-    - "Compliance Report API"
-    - "Compliance Report UI"
+    - "MongoDB Atlas Migration"
+    - "Autorizações UI (Photo Authorization Screen)"
+    - "Configurar Alertas UI (Email Alerts Configuration Screen)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
