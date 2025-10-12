@@ -53,13 +53,20 @@ def make_request(method, endpoint, headers=None, json_data=None, params=None):
     url = f"{BASE_URL}{endpoint}"
     try:
         if method.upper() == "GET":
-            response = requests.get(url, headers=headers, params=params, timeout=30)
+            response = requests.get(url, headers=headers, params=params, timeout=60)
         elif method.upper() == "POST":
-            response = requests.post(url, headers=headers, json=json_data, timeout=30)
+            response = requests.post(url, headers=headers, json=json_data, timeout=60)
         else:
             raise ValueError(f"Unsupported method: {method}")
         
+        print(f"DEBUG: {method} {url} -> {response.status_code}")
         return response
+    except requests.exceptions.Timeout as e:
+        print(f"Request timeout: {e}")
+        return None
+    except requests.exceptions.ConnectionError as e:
+        print(f"Connection error: {e}")
+        return None
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
         return None
