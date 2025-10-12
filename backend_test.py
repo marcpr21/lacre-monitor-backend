@@ -13,9 +13,10 @@ import sys
 # Configuration - Railway Backend URL from review request
 BASE_URL = "https://lacre-monitor-backend-production.up.railway.app/api"
 
-# Test credentials
+# Test credentials from review request
 ADMIN_CREDENTIALS = {"username": "admin", "password": "admin123"}
-EMPLOYEE_CREDENTIALS = {"username": "joao", "password": "123456"}
+EMPLOYEE_CREDENTIALS = {"username": "posto_fagundao", "password": "123456"}
+TEST_USER_CREDENTIALS = {"username": "teste", "password": "teste"}
 INVALID_CREDENTIALS = {"username": "invalid", "password": "wrong"}
 
 # Sample base64 image (small 1x1 pixel PNG)
