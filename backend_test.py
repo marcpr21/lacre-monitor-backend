@@ -106,6 +106,24 @@ def test_authentication(result):
         result.log_fail("Employee login with valid credentials", str(e))
         employee_token = None
     
+    # Test 2.5: Test user login with valid credentials
+    try:
+        response = make_request("POST", "/users/login", json_data=TEST_USER_CREDENTIALS)
+        if response and response.status_code == 200:
+            data = response.json()
+            if "token" in data and "user" in data:
+                test_token = data["token"]
+                result.log_pass("Test user login with valid credentials")
+            else:
+                result.log_fail("Test user login with valid credentials", "Missing token or user in response")
+                test_token = None
+        else:
+            result.log_fail("Test user login with valid credentials", f"Status: {response.status_code if response else 'No response'}")
+            test_token = None
+    except Exception as e:
+        result.log_fail("Test user login with valid credentials", str(e))
+        test_token = None
+    
     # Test 3: Login with invalid credentials
     try:
         response = make_request("POST", "/users/login", json_data=INVALID_CREDENTIALS)
