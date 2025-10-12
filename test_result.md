@@ -278,28 +278,28 @@ metadata:
   run_ui: false
 
   - task: "Autorizações UI (Photo Authorization Screen)"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "frontend/app/authorizations.tsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
-          comment: "Pending implementation. Need to create UI for managing temporary photo authorizations. Should include employee list, photo type selectors (lacre, medidor manhã, medidor tarde), date/time pickers, and integration with /api/admin/authorize, /api/admin/authorizations, and /api/admin/authorizations/{employee_id}/{photo_type} endpoints."
+          comment: "✅ IMPLEMENTED: Created complete authorization management screen. Features: employee list with active authorization badges, three authorization buttons per employee (Lacres, Medidor Manhã, Medidor Tarde), modal for granting authorizations with duration input, revoke authorization functionality, auto-refresh capability, active authorization display with expiry dates. Integrated with backend APIs: POST /api/admin/authorize, GET /api/admin/authorizations, DELETE /api/admin/authorizations/{employee_id}/{photo_type}. Navigation button added to admin panel header. Ready for testing."
 
   - task: "Configurar Alertas UI (Email Alerts Configuration Screen)"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "frontend/app/alerts.tsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
-          comment: "Pending implementation. Need to create UI for configuring email alerts. Should include admin email input, enable/disable toggle, employee selector, photo type selector, and integration with /api/admin/email-alerts/config endpoints (GET and POST)."
+          comment: "✅ IMPLEMENTED: Created complete email alerts configuration screen. Features: admin email input field, enable/disable toggle switch for alerts, statistics cards showing total employees and active alerts, search functionality for filtering employees, individual alert toggles per employee for each photo type (lacre, medidor manhã, medidor tarde), visual indicators for active alerts, save functionality with validation. Integrated with backend APIs: GET /api/admin/email-alerts/config, POST /api/admin/email-alerts/config. Navigation button added to admin panel header (notification icon). Ready for testing."
 
 test_plan:
   current_focus:
