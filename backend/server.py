@@ -421,11 +421,29 @@ async def get_me(current_user = Depends(get_current_user)):
 # Submit Photo
 @api_router.post("/photos/submit")
 async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_user)):
-    # Check schedule (pass username to allow test user bypass)
-    schedule_check = check_photo_schedule(photo.photo_type, current_user["username"])
+    # Check for active authorization first
+    now = get_brazil_time()
+    authorization = await db.authorizations.find_one({
+        "employee_id": current_user["id"],
+        "photo_type": photo.photo_type,
+        "expires_at": {"$gt": now}
+    })
     
-    if not schedule_check["allowed"]:
-        raise HTTPException(status_code=400, detail=schedule_check["message"])
+    # If no authorization, check normal schedule
+    if not authorization:
+        schedule_check = check_photo_schedule(photo.photo_type, current_user["username"])
+        
+        if not schedule_check["allowed"]:
+            raise HTTPException(status_code=400, detail=schedule_check["message"])
+    else:
+        # Has authorization - create schedule_check with authorization info
+        expires_str = authorization["expires_at"].strftime("%d/%m %H:%M")
+        schedule_check = {
+            "allowed": True,
+            "message": f"Autorizado até {expires_str}",
+            "period": f"Autorização até {expires_str}",
+            "period_code": f"{photo.photo_type}_authorized"
+        }
     
     # For lacre photos with location (SKIP FOR TEST USER)
     if photo.photo_type == "lacre" and photo.seal_location_id and current_user["username"].lower() != "teste":
