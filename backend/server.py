@@ -677,6 +677,56 @@ async def cleanup_expired_photos(current_user = Depends(get_current_user)):
         "message": f"{result.deleted_count} fotos expiradas foram deletadas"
     }
 
+# ==================== EMAIL ALERTS ENDPOINTS ====================
+
+@api_router.get("/admin/email-alerts/config")
+async def get_email_alerts_config(current_user = Depends(get_current_user)):
+    """Get email alerts configuration"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    config = await db.email_alerts_config.find_one({"_id": "config"})
+    
+    if not config:
+        # Return default config with 3 empty recipients
+        return {
+            "recipients": [
+                {"email": "", "enabled": False, "employee_alerts": {}, "alert_all_photos": {}},
+                {"email": "", "enabled": False, "employee_alerts": {}, "alert_all_photos": {}},
+                {"email": "", "enabled": False, "employee_alerts": {}, "alert_all_photos": {}}
+            ]
+        }
+    
+    # Ensure we always return 3 recipients
+    recipients = config.get("recipients", [])
+    while len(recipients) < 3:
+        recipients.append({"email": "", "enabled": False, "employee_alerts": {}, "alert_all_photos": {}})
+    
+    return {"recipients": recipients[:3]}  # Limit to 3
+
+@api_router.post("/admin/email-alerts/config")
+async def save_email_alerts_config(config: EmailAlertsConfig, current_user = Depends(get_current_user)):
+    """Save email alerts configuration"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Validate emails
+    for recipient in config.recipients:
+        if recipient.enabled and recipient.email:
+            if "@" not in recipient.email:
+                raise HTTPException(status_code=400, detail=f"Email inválido: {recipient.email}")
+    
+    # Limit to 3 recipients
+    recipients_data = [r.dict() for r in config.recipients[:3]]
+    
+    await db.email_alerts_config.update_one(
+        {"_id": "config"},
+        {"$set": {"recipients": recipients_data}},
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Configuração salva com sucesso"}
+
 # ==================== ANALYTICS/COMPLIANCE ENDPOINTS ====================
 
 @api_router.get("/analytics/missing-photos")
