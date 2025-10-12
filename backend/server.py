@@ -542,6 +542,14 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
     
     await db.photos.insert_one(photo_doc)
     
+    # Send email alerts (non-blocking)
+    asyncio.create_task(check_and_send_alerts(
+        current_user["id"],
+        current_user["name"],
+        photo.photo_type,
+        photo_doc["timestamp"]
+    ))
+    
     message = "Foto enviada com sucesso!"
     if photo.photo_type == "lacre" and seal_location_name and photo.seal_number:
         message = f"Lacre #{photo.seal_number} de {seal_location_name} fotografado!"
