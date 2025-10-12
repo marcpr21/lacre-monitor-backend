@@ -683,6 +683,35 @@ const styles = StyleSheet.create({
   roleOptionTextActive: {
     color: '#fff',
   },
+  photoSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  photoOption: {
+    flex: 1,
+    minWidth: '45%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    gap: 8,
+  },
+  photoOptionActive: {
+    backgroundColor: '#007AFF',
+  },
+  photoOptionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  photoOptionTextActive: {
+    color: '#fff',
+  },
   infoBox: {
     flexDirection: 'row',
     backgroundColor: '#E3F2FD',
