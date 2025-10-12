@@ -768,19 +768,15 @@ export default function Admin() {
                           </View>
                           {employee.missing_lacres && Array.isArray(employee.missing_lacres) && employee.missing_lacres.length > 0 ? (
                             <View style={styles.missingList}>
-                              {employee.missing_lacres.slice(0, 5).map((missing, index) => (
-                                <Text key={index} style={styles.missingItem}>
-                                  • {missing.date_formatted} ({missing.weekday})
+                              {employee.missing_lacres.map((missing, index) => (
+                                <Text key={index} style={styles.missingItemDescriptive}>
+                                  📅 {missing.date_formatted} ({missing.weekday}){'\n'}
+                                  ❌ Deixou de tirar a foto dos lacres
                                 </Text>
                               ))}
-                              {employee.missing_lacres && employee.missing_lacres.length > 5 && (
-                                <Text style={styles.moreItems}>
-                                  +{employee.missing_lacres.length - 5} mais...
-                                </Text>
-                              )}
                             </View>
                           ) : (
-                            <Text style={styles.noMissing}>✅ Todas as fotos em dia</Text>
+                            <Text style={styles.noMissing}>✅ Todas as fotos dos lacres em dia</Text>
                           )}
                         </View>
 
