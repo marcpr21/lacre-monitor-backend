@@ -31,7 +31,15 @@ def init_users():
         "Posto Malvino", "Posto Marclau", "Posto Meia Noite", "Posto ML",
         "Posto Monteiro", "Posto MR", "Posto Pinheirinho", "Posto Planeta",
         "Posto Quintino", "Posto Santa Cruz", "Posto Santa Rosa", "Posto Santissimo",
-        "Posto Serraria", "Posto Souza", "Posto Sul", "Posto Vila Nova"
+       # Usuário teste
+    teste_pw = bcrypt.hashpw("teste".encode('utf-8'), bcrypt.gensalt())
+    USERS["teste"] = {
+        "id": str(uuid.uuid4()),
+        "username": "teste",
+        "password": teste_pw,
+        "name": "Usuário Teste",
+        "role": "employee"
+    } 
     ]
     for name in employee_names:
         emp_pw = bcrypt.hashpw("123456".encode('utf-8'), bcrypt.gensalt())
