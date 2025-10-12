@@ -56,6 +56,110 @@ def convert_utc_to_brazil(utc_datetime):
     # Convert to Brazil timezone
     return utc_datetime.astimezone(ZoneInfo("America/Sao_Paulo"))
 
+# ==================== EMAIL HELPER ====================
+
+async def send_email_alert(to_email: str, employee_name: str, photo_type: str, timestamp: datetime):
+    """Send email alert when a photo is submitted"""
+    if not SENDGRID_API_KEY:
+        logger.warning("SendGrid API key not configured, skipping email")
+        return False
+    
+    try:
+        # Format photo type for display
+        photo_type_display = {
+            'lacre': 'Lacre',
+            'medidor_manha': 'Medidor Manhã',
+            'medidor_tarde': 'Medidor Tarde',
+            'medidor': 'Medidor'
+        }.get(photo_type, photo_type)
+        
+        # Format timestamp
+        brazil_time = convert_utc_to_brazil(timestamp)
+        time_str = brazil_time.strftime('%d/%m/%Y às %H:%M')
+        
+        # Email content
+        subject = f"📸 Nova Foto Enviada - {employee_name}"
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #007AFF; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+                <h2 style="margin: 0;">🔔 Alerta de Foto</h2>
+            </div>
+            <div style="background-color: #f9f9f9; padding: 20px; border: 1px solid #e0e0e0; border-radius: 0 0 8px 8px;">
+                <p style="font-size: 16px; color: #333;">Uma nova foto foi enviada:</p>
+                <div style="background-color: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <p style="margin: 8px 0;"><strong>👤 Funcionário:</strong> {employee_name}</p>
+                    <p style="margin: 8px 0;"><strong>📷 Tipo de Foto:</strong> {photo_type_display}</p>
+                    <p style="margin: 8px 0;"><strong>🕐 Data/Hora:</strong> {time_str}</p>
+                </div>
+                <p style="font-size: 14px; color: #666; margin-top: 20px;">
+                    Este é um alerta automático do Sistema Lacre Monitor.
+                </p>
+            </div>
+        </div>
+        """
+        
+        # Create email
+        message = Mail(
+            from_email=Email(EMAIL_FROM, EMAIL_FROM_NAME),
+            to_emails=To(to_email),
+            subject=subject,
+            html_content=Content("text/html", html_content)
+        )
+        
+        # Send email
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = await asyncio.to_thread(sg.send, message)
+        
+        logger.info(f"Email sent to {to_email} - Status: {response.status_code}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error sending email to {to_email}: {str(e)}")
+        return False
+
+async def check_and_send_alerts(employee_id: str, employee_name: str, photo_type: str, timestamp: datetime):
+    """Check email alert configuration and send emails if needed"""
+    try:
+        # Get email alerts configuration
+        config = await db.email_alerts_config.find_one({"_id": "config"})
+        
+        if not config or not config.get("recipients"):
+            return
+        
+        recipients = config.get("recipients", [])
+        
+        for recipient in recipients:
+            # Skip if recipient is not enabled or has no email
+            if not recipient.get("enabled") or not recipient.get("email"):
+                continue
+            
+            # Check if this employee has alerts configured for this recipient
+            employee_alerts = recipient.get("employee_alerts", {}).get(employee_id, {})
+            alert_all_photos = recipient.get("alert_all_photos", {}).get(employee_id, False)
+            
+            # Determine if we should send alert
+            should_alert = False
+            
+            if alert_all_photos:
+                # If "all photos" is enabled, send alert for any photo type
+                should_alert = True
+            else:
+                # Check specific photo type
+                should_alert = employee_alerts.get(photo_type, False)
+            
+            if should_alert:
+                # Send email alert
+                await send_email_alert(
+                    recipient["email"],
+                    employee_name,
+                    photo_type,
+                    timestamp
+                )
+                
+    except Exception as e:
+        logger.error(f"Error checking/sending alerts: {str(e)}")
+
 # ==================== MODELS ====================
 
 class UserCreate(BaseModel):
