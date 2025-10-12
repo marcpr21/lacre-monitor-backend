@@ -77,7 +77,7 @@ def test_authentication(result):
     
     # Test 1: Admin login with valid credentials
     try:
-        response = make_request("POST", "/users/login", json_data=ADMIN_CREDENTIALS)
+        response = make_request("POST", "/auth/login", json_data=ADMIN_CREDENTIALS)
         if response and response.status_code == 200:
             data = response.json()
             if "token" in data and "user" in data:
