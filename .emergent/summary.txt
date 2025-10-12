@@ -1,93 +1,64 @@
 <analysis>
-The AI engineer iteratively developed a full-stack Expo mobile app with a FastAPI backend. Key initial features included user authentication, photo submission with strict validations (time, type), and an admin panel. A major challenge involved persistent dependency conflicts within the Expo/React Native ecosystem, especially with  and , often requiring extensive debugging and  calls. Timezone handling and backend API consistency were recurring issues. Significant progress was made on a complex admin panel with hierarchical photo organization and user management. Later, the engineer implemented a compliance report, refactored the backend to use an external Railway deployment with in-memory data, and resolved numerous frontend connectivity, UI/UX (e.g., iPhone safe area for buttons), and functional issues (photo submission, user creation, password reset). The process involved frequent restarts and direct user interaction to resolve problems.
+The AI engineer's work involved developing and stabilizing a full-stack Expo mobile app with a FastAPI backend. Initially, the focus was on implementing core features like user authentication, specific photo submissions with validations, and an admin panel. A significant portion of the trajectory was dedicated to debugging persistent issues: resolving frontend dependency conflicts (especially with  and animation libraries), fixing critical Expo Go connectivity problems (due to cached tunnel URLs and environment restarts), and addressing numerous backend inconsistencies.
+
+A major pivot occurred when the in-memory backend continuously lost data on restarts, leading to a prolonged debugging process for deploying a persistent backend on Railway. This involved multiple attempts to configure Python versions, s, environment variables, and correct Python syntax/encoding issues. Concurrently, the engineer implemented user-requested features like photo zoom, refined the compliance report display, added comprehensive user CRUD operations, and integrated advanced functionalities such as a temporary photo authorization system and configurable email alerts. The trajectory concluded with the backend successfully migrated to use MongoDB Atlas for persistent data storage, and the frontend ready for new UI implementations.
 </analysis>
 
 <product_requirements>
-The Lacre Monitor app is a photo monitoring tool for employees.
-**Core Functionality:**
-1.  **Employee Login:** Individual username/password login.
-2.  **Photo Capture:** In-app camera only.
-    *   **Seal Photos (Lacres):** Mondays, Wednesdays, Fridays, 06:00-12:00.
-    *   **Meter Photos (Medidor):** Daily, twice: 06:00-09:00 and 17:00-18:00.
-3.  **Temporary Photos:** Not saved on phone.
-4.  **Push Notifications:** Reminders for missed photos (1-hour for seals, 15-min for meters).
-5.  **Admin Panel:** View all photos (employee, location, timestamp).
-6.  **User Experience:** Simple, intuitive, cross-platform (Android & iOS).
-7.  **Photo Storage:** Most recent photo only policy per type/period; teste user bypasses all restrictions.
-8.  **Admin Enhancements:**
-    *   **User Management:** Add, edit, delete, reset passwords for users.
-    *   **Photo Organization:** Hierarchical, collapsible view: Date > Employee > Photo Type.
-    *   **Compliance Report (Relatório de Conformidade):** Tab in admin panel to show missed photo submissions by employees, including dates/periods.
-9.  **Deployment:** Keep app (especially backend) always online, generate Android APK.
-10. **UI Fixes:** Adjust X (close) button position on iPhone photo modal, enable photo zoom.
+The Lacre Monitor app is a mobile photo monitoring tool for employees. Key features include individual user login, in-app camera-only photo capture with strict time-based rules for Seal Photos (M/W/F, 06:00-12:00) and Meter Photos (Daily, 06:00-09:00, 17:00-18:00). Photos are temporary and not saved on the phone, and push notifications remind employees of missed submissions. The admin panel allows viewing all photos hierarchically (Date > Employee > Type).
+
+Recent enhancements include:
+- Improved Admin Panel with user management (add, edit, delete, reset passwords), a Relatório de Conformidade (compliance report showing missed submissions per employee, day, and photo type).
+- UI fixes for iPhone safe areas, including dynamic X button positioning on photo modals and implementing pinch-to-zoom for photos.
+- A new system for administrators to authorize employees to take photos outside scheduled periods (individual per employee, per photo type: lacre, medidor manhã/tarde).
+- A system for configurable email alerts to admins when specific employee/photo type combinations are submitted.
+- The backend has been moved to Railway for 24/7 availability and is currently being migrated to MongoDB Atlas for persistent data storage to prevent data loss on server restarts.
 </product_requirements>
 
 <key_technical_concepts>
--   **Expo Router:** File-based routing for navigation.
--   **React Native:** Mobile UI development.
--   **FastAPI:** Python backend for APIs.
--   **MongoDB/In-memory Dict:** Database/Temporary data storage.
--   **Zustand:** Frontend state management.
--   **Expo Notifications:** Push notification service.
--   **Date-fns/Pytz/datetime.timezone:** Timezone handling (Brazil UTC-3).
--   **Base64 Encoding:** Image storage format.
--   **Railway:** External platform for backend deployment.
--   **useSafeAreaInsets:** React Native hook for safe area compensation.
+- **Expo Router:** File-based navigation.
+- **React Native:** Cross-platform mobile UI.
+- **FastAPI:** Python backend for APIs.
+- **MongoDB Atlas:** Cloud-hosted, persistent database.
+- **Zustand:** Frontend state management.
+- **react-native-image-zoom-viewer:** Photo zoom.
+- **Railway:** External platform for backend deployment.
+- **Timezone Handling:**  for Brazil UTC-3.
+- **JWT:** Authentication tokens.
+- **Bcrypt:** Password hashing.
 </key_technical_concepts>
 
 <code_architecture>
-The application follows a full-stack architecture with an Expo React Native frontend and a FastAPI Python backend. Initially backed by MongoDB, the backend was later transitioned to an in-memory temporary data store for Railway deployment.
+The application employs a full-stack architecture with an Expo React Native frontend and a FastAPI Python backend. Initially, the backend used local MongoDB, then temporarily in-memory storage, and is now migrating to MongoDB Atlas.
 
 
 
--   ****:
-    -   **Summary:** The core FastAPI backend. Defines API for auth, photo submission, user management, and compliance reports.
-    -   **Changes:** Initially MongoDB-backed, later simplified to in-memory dictionary  and list  for Railway deployment. Implemented timezone adjustment (), basic token validation, and full CRUD for users (including password reset) and photos.
--   ****:
-    -   **Summary:** A stripped-down version of the backend's  specifically for Railway deployment, using in-memory data (, ) instead of MongoDB. It includes essential routes for login, user creation, photo submission, photo retrieval, user listing, and a placeholder for analytics.
-    -   **Changes:** Iteratively updated to fix syntax errors, include core routes, handle authorization, correct timezone logic, and prevent crashes due to missing data structures or incorrect imports.
--   ****:
-    -   **Summary:** Entry point for the FastAPI application on Railway, configured to run  and respect the  environment variable provided by Railway.
-    -   **Changes:** Created to correctly launch the FastAPI app.
--   ****:
-    -   **Summary:** The admin panel. Displays photos, compliance reports, and links to user management.
-    -   **Changes:** Heavily modified to add Fotos and Conformidade tabs, implement collapsible sections for photo organization, and display compliance data. Includes logic for period filters. The photo modal was updated to dynamically adjust the X (close) button position using  for iPhone compatibility, eventually being moved to a safer top-right position. Initial attempts to move the button to the bottom caused JSX errors.
--   ****:
-    -   **Summary:** Handles camera access and photo capture.
-    -   **Changes:** Added  checks to display an informative message on web, as camera features are mobile-only. Implemented more robust photo capture logic, including  in submission, image size reduction, and detailed debug logs.
--   ****:
-    -   **Summary:** Main screen for employees to capture photos.
-    -   **Changes:** Added  checks to guard Expo Notifications API calls, preventing crashes on web.
--   ****:
-    -   **Summary:** Screen for admin user management.
-    -   **Changes:** UI elements to create, edit, delete, and reset passwords for users.
--   ****:
-    -   **Summary:** Zustand store for authentication state management.
-    -   **Changes:** Updated  to handle different environments (web/mobile /) and improved navigation (). Added logic to clear storage on  to prevent auto-login.
--   ****:
-    -   **Summary:** Environment variables for the frontend.
-    -   **Changes:**  was repeatedly updated to point to the correct backend service, first from a local proxy, then to the external Railway deployment URL.
--   ****:
-    -   **Summary:** Expo app configuration.
-    -   **Changes:** Otimized for Android APK build, including , , , and permissions (CAMERA, ACCESS_FINE_LOCATION). Added  plugin.
--   ****:
-    -   **Summary:** EAS CLI configuration for building native apps.
-    -   **Changes:** Created to specify Android APK build type for production and preview profiles.
--   ****:
-    -   **Summary:** Web app manifest file for PWA compatibility.
-    -   **Changes:** Created to provide basic manifest data (name, short_name, start_url, display, background_color, theme_color, icons) to support PWA Builder.
+-   ****: The core FastAPI backend. It evolved from a MongoDB-backed version to an in-memory version (), then back to a fixed local MongoDB version, and is currently being updated for MongoDB Atlas. It defines APIs for auth, photo submission, user management, and compliance reports. It includes initial user data, timezone handling for Brazil, and new endpoints/logic for photo authorization and email alert configurations.
+-   ** (and related files , )**: This directory and its contents represent the code for the Railway deployment. It underwent numerous iterations, starting as a full MongoDB backend, then simplified to an in-memory version ( and  updated repeatedly) to resolve deployment issues. It now contains the setup for the full feature set with MongoDB Atlas, including ,  (), and  ().
+-   ****: The main admin panel. It was heavily modified to support photo zoom functionality (using ), display compliance reports with detailed missing photo information, and to include navigation buttons for Gerenciar Usuários, Autorizações (new), and Configurar Alertas (new). It also contains the  utility, which was adjusted for timezone display.
+-   ****: A newly created frontend screen for administrators to manage temporary photo submission authorizations for employees.
+-   ****: Manages user creation, editing, deletion, and password resets. It was updated to correctly send password data for reset operations.
+-   ****: Zustand store for authentication. It was updated to use the correct login API route ().
+-   ****: Stores the , which was crucial for switching between local and Railway backend endpoints.
+-   ****: Updated to include  (later removed due to issues) and then .
 </code_architecture>
 
 <pending_tasks>
--   Frontend changes for configurable multiple lacres per location.
--   Full integration of a persistent database (e.g., MongoDB Atlas) with the Railway backend, replacing the current in-memory data store.
--   Re-implementing all original backend routes (like detailed compliance report logic and specific photo deletion rules) into the Railway backend, which is currently simplified.
+- Complete the migration of the Railway backend to fully integrate with MongoDB Atlas. This involves updating the  file on GitHub with the provided MongoDB-enabled code.
+- Implement the frontend UI for the Autorizações screen ().
+- Implement the frontend UI for the Configurar Alertas (email alerts) screen.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was working on enhancing the photo viewing experience within the admin panel. The user explicitly requested the ability to zoom in on photos (). To address this, the AI engineer initiated modifications to the  file. The plan is to update the existing photo modal to include zoom functionality. This involves introducing new state variables ( and ) to manage the zoom level and visibility, and integrating appropriate components or logic for image scaling within the modal. This work is directly related to improving the user experience for administrators when reviewing submitted photos. The last action was adding the  and  states in  and planning the modification of the image display part of the modal.
+Immediately before this summary request, the AI engineer was working on migrating the backend from an in-memory data store on Railway to a persistent MongoDB Atlas database. This was a critical step to ensure data stability and prevent data loss upon server restarts, a recurring user complaint.
+
+The user has completed the prerequisite steps:
+1.  Updated the  file on their GitHub repository for the Railway backend to include  and  for MongoDB connectivity.
+2.  Added the necessary environment variables (, ) to their Railway project's configuration.
+
+The AI engineer's last action was to provide the complete, updated  file (saved temporarily as ) designed to work with MongoDB Atlas, including all previously implemented features like user CRUD, photo submission, compliance reports, photo authorization, and email alert configuration. The engineer is currently waiting for the user to replace their existing  file on GitHub with this new, MongoDB-enabled version.
 </current_work>
 
 <optional_next_step>
-I will proceed with modifying the photo modal in  to implement the requested zoom functionality for images.
+Provide the user with the content of the MongoDB Atlas-enabled  file to replace their current  on GitHub.
 </optional_next_step>
