@@ -424,6 +424,8 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
     # Check for active authorization first
     now = get_brazil_time()
     
+    logger.info(f"Photo submit - User: {current_user['username']}, Type: {photo.photo_type}, Employee ID: {current_user['id']}")
+    
     # For medidor photos, check both medidor_manha and medidor_tarde authorizations
     if photo.photo_type == "medidor":
         authorization = await db.authorizations.find_one({
@@ -431,12 +433,14 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
             "photo_type": {"$in": ["medidor", "medidor_manha", "medidor_tarde"]},
             "expires_at": {"$gt": now}
         })
+        logger.info(f"Medidor authorization check - Found: {authorization is not None}")
     else:
         authorization = await db.authorizations.find_one({
             "employee_id": current_user["id"],
             "photo_type": photo.photo_type,
             "expires_at": {"$gt": now}
         })
+        logger.info(f"{photo.photo_type} authorization check - Found: {authorization is not None}")
     
     # If no authorization, check normal schedule
     if not authorization:
