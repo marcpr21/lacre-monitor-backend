@@ -384,6 +384,79 @@ export default function Users() {
               </TouchableOpacity>
             </View>
 
+            {formData.role === 'employee' && (
+              <>
+                <Text style={styles.label}>Fotos Obrigatórias *</Text>
+                <View style={styles.photoSelector}>
+                  <TouchableOpacity
+                    style={[
+                      styles.photoOption,
+                      formData.required_photos === 'both' && styles.photoOptionActive,
+                    ]}
+                    onPress={() => setFormData({ ...formData, required_photos: 'both' })}
+                  >
+                    <Ionicons
+                      name="images"
+                      size={20}
+                      color={formData.required_photos === 'both' ? '#fff' : '#007AFF'}
+                    />
+                    <Text
+                      style={[
+                        styles.photoOptionText,
+                        formData.required_photos === 'both' && styles.photoOptionTextActive,
+                      ]}
+                    >
+                      Lacres + Medidores
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.photoOption,
+                      formData.required_photos === 'lacre' && styles.photoOptionActive,
+                    ]}
+                    onPress={() => setFormData({ ...formData, required_photos: 'lacre' })}
+                  >
+                    <Ionicons
+                      name="lock-closed"
+                      size={20}
+                      color={formData.required_photos === 'lacre' ? '#fff' : '#FF6B6B'}
+                    />
+                    <Text
+                      style={[
+                        styles.photoOptionText,
+                        formData.required_photos === 'lacre' && styles.photoOptionTextActive,
+                      ]}
+                    >
+                      Apenas Lacres
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.photoOption,
+                      formData.required_photos === 'medidor' && styles.photoOptionActive,
+                    ]}
+                    onPress={() => setFormData({ ...formData, required_photos: 'medidor' })}
+                  >
+                    <Ionicons
+                      name="speedometer"
+                      size={20}
+                      color={formData.required_photos === 'medidor' ? '#fff' : '#FFA726'}
+                    />
+                    <Text
+                      style={[
+                        styles.photoOptionText,
+                        formData.required_photos === 'medidor' && styles.photoOptionTextActive,
+                      ]}
+                    >
+                      Apenas Medidores
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
             {editingUser && (
               <View style={styles.infoBox}>
                 <Ionicons name="information-circle" size={20} color="#007AFF" />
