@@ -302,6 +302,12 @@ export default function Admin() {
           >
             <Ionicons name="people" size={24} color="#007AFF" />
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => router.push('/authorizations')}
+          >
+            <Ionicons name="key" size={24} color="#FF9500" />
+          </TouchableOpacity>
           {activeTab === 'photos' && (
             <TouchableOpacity
               style={styles.filterButton}
