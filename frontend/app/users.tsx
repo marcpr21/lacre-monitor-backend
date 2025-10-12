@@ -43,6 +43,7 @@ export default function Users() {
     password: '',
     name: '',
     role: 'employee',
+    required_photos: 'both',
   });
   const [newPassword, setNewPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
