@@ -167,6 +167,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "POST /api/photos/submit endpoint working correctly. Successfully accepts photos with valid employee tokens during allowed time periods. Properly validates schedule restrictions. Returns success response with photo_id and period information. Location data (latitude, longitude, location_name) properly stored."
+        - working: true
+          agent: "testing"
+          comment: "Railway deployment photo submission verified. Successfully submitted test photo using teste user account. Photo stored in MongoDB Atlas with ID 562aa8a3-8967-41ae-b1ee-9b1361a2eeee. Data persistence to MongoDB Atlas confirmed working correctly."
 
   - task: "Photo Retrieval"
     implemented: true
