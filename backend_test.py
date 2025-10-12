@@ -133,7 +133,7 @@ def test_authentication(result):
     
     # Test 3: Login with invalid credentials
     try:
-        response = make_request("POST", "/users/login", json_data=INVALID_CREDENTIALS)
+        response = make_request("POST", "/auth/login", json_data=INVALID_CREDENTIALS)
         if response and response.status_code == 401:
             result.log_pass("Login with invalid credentials (should fail)")
         else:
