@@ -167,6 +167,7 @@ class UserCreate(BaseModel):
     password: str
     name: str
     role: str = "employee"  # employee or admin
+    required_photos: str = "both"  # lacre, medidor, or both
 
 class UserLogin(BaseModel):
     username: str
