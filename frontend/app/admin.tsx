@@ -1434,6 +1434,17 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
   },
+  missingItemDescriptive: {
+    fontSize: 14,
+    color: '#444',
+    marginBottom: 12,
+    lineHeight: 20,
+    backgroundColor: '#FFF3CD',
+    padding: 10,
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#F44336',
+  },
   moreItems: {
     fontSize: 14,
     color: '#007AFF',
