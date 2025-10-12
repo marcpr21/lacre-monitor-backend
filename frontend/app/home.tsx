@@ -231,13 +231,18 @@ export default function Home() {
     const lacreDays = [1, 3, 5]; // Monday, Wednesday, Friday
     const isLacreDay = lacreDays.includes(dayOfWeek);
     const isBeforeNoon = hour < 12;
+    const hasLacreAuth = authorizations.lacre?.authorized;
 
     scheduleData.push({
       type: 'lacre',
       title: 'Foto de Lacre',
-      description: isTestUser ? 'Teste - Horário livre' : 'Segunda, Quarta e Sexta até 12:00',
-      allowed: isTestUser || (isLacreDay && isBeforeNoon),
-      message: isTestUser 
+      description: hasLacreAuth 
+        ? `✅ Autorizado até ${new Date(authorizations.lacre.expires_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
+        : isTestUser ? 'Teste - Horário livre' : 'Segunda, Quarta e Sexta até 12:00',
+      allowed: isTestUser || hasLacreAuth || (isLacreDay && isBeforeNoon),
+      message: hasLacreAuth
+        ? 'Autorizado pelo administrador!'
+        : isTestUser 
         ? 'Usuário de teste - sempre disponível!'
         : isLacreDay
         ? isBeforeNoon
