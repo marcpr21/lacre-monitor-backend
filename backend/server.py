@@ -617,6 +617,16 @@ async def update_user(user_id: str, updates: UserUpdate, current_user = Depends(
 class PasswordReset(BaseModel):
     new_password: str
 
+# Email Alert Configuration Models
+class EmailRecipient(BaseModel):
+    email: str
+    enabled: bool = True
+    employee_alerts: Dict[str, Dict[str, bool]] = {}  # {employee_id: {photo_type: bool}}
+    alert_all_photos: Dict[str, bool] = {}  # {employee_id: bool} - if True, alerts for all photo types
+
+class EmailAlertsConfig(BaseModel):
+    recipients: List[EmailRecipient] = []
+
 @api_router.put("/users/{user_id}/reset-password")
 async def reset_password(user_id: str, reset_data: PasswordReset, current_user = Depends(get_current_user)):
     if current_user["role"] != "admin":
