@@ -406,7 +406,8 @@ async def login(credentials: UserLogin):
             id=user["id"],
             username=user["username"],
             name=user["name"],
-            role=user["role"]
+            role=user["role"],
+            required_photos=user.get("required_photos", "both")
         )
     )
 
