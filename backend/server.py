@@ -13,6 +13,9 @@ from datetime import datetime, timedelta
 import bcrypt
 import jwt
 from zoneinfo import ZoneInfo
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Email, To, Content
+import asyncio
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
