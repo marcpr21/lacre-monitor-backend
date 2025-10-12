@@ -256,14 +256,20 @@ export default function Home() {
     // Check Medidor schedule - Morning and Afternoon separately
     const isMorning = hour >= 6 && hour < 9;
     const isEvening = hour >= 17 && hour < 18;
+    const hasMedidorManhaAuth = authorizations.medidor_manha?.authorized;
+    const hasMedidorTardeAuth = authorizations.medidor_tarde?.authorized;
 
     // Morning medidor
     scheduleData.push({
       type: 'medidor',
       title: 'Medidor - Manhã',
-      description: isTestUser ? 'Teste - Horário livre' : '06:00-09:00',
-      allowed: isTestUser || isMorning,
-      message: isTestUser 
+      description: hasMedidorManhaAuth
+        ? `✅ Autorizado até ${new Date(authorizations.medidor_manha.expires_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
+        : isTestUser ? 'Teste - Horário livre' : '06:00-09:00',
+      allowed: isTestUser || hasMedidorManhaAuth || isMorning,
+      message: hasMedidorManhaAuth
+        ? 'Autorizado pelo administrador!'
+        : isTestUser 
         ? 'Usuário de teste - sempre disponível!'
         : isMorning ? 'Disponível agora!' : 'Período: 06:00-09:00',
       icon: 'sunny',
@@ -274,9 +280,13 @@ export default function Home() {
     scheduleData.push({
       type: 'medidor',
       title: 'Medidor - Tarde',
-      description: isTestUser ? 'Teste - Horário livre' : '17:00-18:00',
-      allowed: isTestUser || isEvening,
-      message: isTestUser 
+      description: hasMedidorTardeAuth
+        ? `✅ Autorizado até ${new Date(authorizations.medidor_tarde.expires_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
+        : isTestUser ? 'Teste - Horário livre' : '17:00-18:00',
+      allowed: isTestUser || hasMedidorTardeAuth || isEvening,
+      message: hasMedidorTardeAuth
+        ? 'Autorizado pelo administrador!'
+        : isTestUser 
         ? 'Usuário de teste - sempre disponível!'
         : isEvening ? 'Disponível agora!' : 'Período: 17:00-18:00',
       icon: 'moon',
