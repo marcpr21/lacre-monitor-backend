@@ -24,6 +24,7 @@ interface User {
   username: string;
   name: string;
   role: string;
+  required_photos?: string;
 }
 
 export default function Users() {
