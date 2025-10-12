@@ -134,9 +134,7 @@ def test_authentication(result):
     except Exception as e:
         result.log_fail("Login with invalid credentials (should fail)", str(e))
     
-    return admin_token, employee_token
-    
-    return admin_token, employee_token
+    return admin_token, employee_token, test_token
 
 def test_user_info(result, admin_token, employee_token):
     """Test user info endpoints"""
