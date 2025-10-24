@@ -1241,7 +1241,7 @@ async def get_seal_progress_today(current_user = Depends(get_current_user)):
 # Direct endpoint for photos - bypasses FastAPI's JSON encoding
 @app.get("/api/photos-direct")
 async def get_photos_direct(
-    authorization: str = Header(None),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
     employee_id: Optional[str] = None,
     photo_type: Optional[str] = None,
     limit: int = 100
