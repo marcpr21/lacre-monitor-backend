@@ -19,7 +19,7 @@ import { router } from 'expo-router';
 import axios from 'axios';
 import ImageViewer from 'react-native-image-zoom-viewer';
 
-const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://lacre-monitor-backend-production.up.railway.app';
 
 interface Photo {
   id: string;

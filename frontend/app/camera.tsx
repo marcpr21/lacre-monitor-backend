@@ -18,7 +18,7 @@ import * as Location from 'expo-location';
 import axios from 'axios';
 import { getAuthToken } from './store/authStore';
 
-const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://lacre-monitor-backend-production.up.railway.app';
 
 export default function Camera() {
   const { type } = useLocalSearchParams<{ type: 'lacre' | 'medidor' }>();

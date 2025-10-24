@@ -2,55 +2,33 @@
   "expo": {
     "name": "Lacre Monitor",
     "slug": "lacre-monitor",
+    "owner": "marcprodrigues",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
     "scheme": "lacre-monitor",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "description": "Sistema de monitoramento de lacres e medidores para empresas",
-    "privacy": "unlisted",
+    "description": "Sistema de monitoramento",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.empresa.lacremonitor"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#007AFF"
-      },
-      "edgeToEdgeEnabled": true,
       "package": "com.empresa.lacremonitor",
       "versionCode": 1,
       "permissions": [
         "CAMERA",
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "WRITE_EXTERNAL_STORAGE"
+        "ACCESS_COARSE_LOCATION"
       ]
     },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
     "plugins": [
-      "expo-router",
-      "expo-dev-client",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#007AFF"
-        }
-      ],
-      "expo-font",
-      "expo-web-browser"
+      "expo-router"
     ],
-    "experiments": {
-      "typedRoutes": true
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c78c12db-55a7-4116-9ba2-f98131ef7018"
+      }
     }
   }
 }

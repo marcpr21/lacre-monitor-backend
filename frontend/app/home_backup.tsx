@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 
-const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://lacre-monitor-backend-production.up.railway.app';
 
 interface ScheduleItem {
   type: 'lacre' | 'medidor';
