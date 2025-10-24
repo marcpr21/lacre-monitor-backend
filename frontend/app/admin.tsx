@@ -125,7 +125,7 @@ export default function Admin() {
         params.employee_id = selectedEmployee;
       }
 
-      const response = await axios.get(`${API_URL}/api/photos`, {
+      const response = await axios.get(`${API_URL}/api/photos-direct`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -1238,6 +1238,83 @@ async def get_seal_progress_today(current_user = Depends(get_current_user)):
     return progress
 
 # Include the router in the main app
+# Direct endpoint for photos - bypasses FastAPI's JSON encoding
+@app.get("/api/photos-direct")
+async def get_photos_direct(
+    authorization: str = Header(None),
+    employee_id: Optional[str] = None,
+    photo_type: Optional[str] = None,
+    limit: int = 100
+):
+    try:
+        from bson import ObjectId
+        from starlette.responses import Response
+        import json
+        
+        # Verify token
+        if not authorization or not authorization.startswith("Bearer "):
+            return Response(content='{"error": "Unauthorized"}', status_code=401, media_type="application/json")
+        
+        token = authorization.replace("Bearer ", "")
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("user_id")
+            role = payload.get("role")
+        except:
+            return Response(content='{"error": "Invalid token"}', status_code=401, media_type="application/json")
+        
+        # Only admins can view all photos
+        if role != "admin":
+            employee_id = user_id
+        
+        # Build query
+        query = {}
+        if employee_id:
+            query["employee_id"] = employee_id
+        if photo_type:
+            query["photo_type"] = photo_type
+        
+        # Get photos
+        photos_cursor = db.photos.find(query).sort("timestamp", -1).limit(min(limit, 100))
+        photos = await photos_cursor.to_list(length=min(limit, 100))
+        
+        # Clean photos
+        photo_list = []
+        for p in photos:
+            try:
+                # Remove _id
+                p.pop("_id", None)
+                
+                # Convert timestamp
+                if "timestamp" in p and p["timestamp"]:
+                    p["timestamp"] = convert_utc_to_brazil(p["timestamp"]).isoformat()
+                
+                # Convert any remaining ObjectIds
+                def clean_obj(obj):
+                    if isinstance(obj, ObjectId):
+                        return str(obj)
+                    elif isinstance(obj, datetime):
+                        return obj.isoformat()
+                    elif isinstance(obj, dict):
+                        return {k: clean_obj(v) for k, v in obj.items()}
+                    elif isinstance(obj, list):
+                        return [clean_obj(i) for i in obj]
+                    return obj
+                
+                photo_list.append(clean_obj(p))
+            except Exception as e:
+                print(f"Error processing photo: {str(e)}")
+                continue
+        
+        # Return raw JSON
+        response_data = {"photos": photo_list, "total": len(photo_list)}
+        return Response(content=json.dumps(response_data), media_type="application/json")
+        
+    except Exception as e:
+        print(f"Error in get_photos_direct: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response(content='{"photos": [], "total": 0}', media_type="application/json")
 app.include_router(api_router)
 
 app.add_middleware(
