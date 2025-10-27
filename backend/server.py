@@ -1325,8 +1325,8 @@ async def get_photos_direct(
             query["photo_type"] = photo_type
         
         # Get photos
-        photos_cursor = db.photos.find(query).sort("timestamp", -1).limit(min(limit, 100))
-        photos = await photos_cursor.to_list(length=min(limit, 100))
+        actual_limit = min(limit, 50)
+        photos = await db.photos.find(query).limit(actual_limit).to.list(Lenght=actual_limit)
         
         # Clean photos
         photo_list = []
