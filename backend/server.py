@@ -631,7 +631,8 @@ async def get_photos(
         query["timestamp"]["$lte"] = datetime.fromisoformat(end_date)
     
     # Get photos
-    photos = await db.photos.find(query).sort("timestamp", -1).limit(limit).to_list(limit)
+    actual_limit = min(limit, 50)
+photos = await db.photos.find(query).limit(actual_limit).to_list(length=actual_limit)
     
     photo_list = [
         PhotoResponse(
