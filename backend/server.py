@@ -631,7 +631,8 @@ async def get_photos(
         query["timestamp"]["$lte"] = datetime.fromisoformat(end_date)
     
     # Get photos
-    photos = await db.photos.find(query).sort("timestamp", -1).limit(limit).to_list(limit)
+    actual_limit = min(limit, 50)
+    photos = await db.photos.find(query).limit(actual_limit).to_list(length=actual_limit)
     
     photo_list = [
         PhotoResponse(
@@ -1264,8 +1265,9 @@ async def get_photos_direct(
             query["photo_type"] = photo_type
         
         # Get photos
-        photos_cursor = db.photos.find(query).sort("timestamp", -1).allow_disk_use(True).limit(min(limit, 100))
-        photos = await photos_cursor.to_list(length=min(limit, 100))
+        actual_limit = min(limit, 50)
+        photos = await db.photos.find(query).limit(actual_limit).to_list(length=actual_limit)
+        
         
         # Clean photos
         photo_list = []
