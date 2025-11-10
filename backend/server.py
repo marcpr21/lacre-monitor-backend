@@ -575,6 +575,15 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
         "seal_number": photo.seal_number
     }
     
+    # SMART CLEANUP: Delete ALL old photos of the SAME employee and SAME type
+    # Always keep only the NEWEST photo (delete all previous ones)
+    deleted = await db.photos.delete_many({
+        "employee_id": current_user["id"],
+        "photo_type": photo.photo_type
+    })
+    if deleted.deleted_count > 0:
+        print(f"🗑️  Smart cleanup: Deleted {deleted.deleted_count} old {photo.photo_type} photos from {current_user['name']}")    
+
     await db.photos.insert_one(photo_doc)
     
     # Send email alerts (non-blocking)
