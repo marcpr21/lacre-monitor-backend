@@ -498,27 +498,36 @@ async def submit_photo(photo: PhotoSubmit, current_user = Depends(get_current_us
             )
     
     # For medidor photos, check if user already submitted for this period today
-    # SKIP THIS CHECK FOR TEST USER
+    # SKIP THIS CHECK FOR TEST USER AND AUTHORIZED PHOTOS
     if photo.photo_type == "medidor" and current_user["username"].lower() != "teste":
-        today_start = get_brazil_time().replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = today_start + timedelta(days=1)
+        # DEBUG: Log authorization status
+        logger.info(f"🔍 Duplicate check - Authorization exists: {authorization is not None}")
         
-        existing_photo = await db.photos.find_one({
-            "employee_id": current_user["id"],
-            "photo_type": "medidor",
-            "period_code": schedule_check["period_code"],
-            "timestamp": {
-                "$gte": today_start,
-                "$lt": today_end
-            }
-        })
-        
-        if existing_photo:
-            period_name = "manhã" if schedule_check["period_code"] == "medidor_manha" else "tarde"
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Você já enviou a foto do medidor do período da {period_name} hoje"
-            )
+        # ONLY check for duplicates if NO authorization exists
+        if not authorization:
+            logger.info(f"⚠️ No authorization - checking for duplicate medidor photo")
+            today_start = get_brazil_time().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_end = today_start + timedelta(days=1)
+            
+            existing_photo = await db.photos.find_one({
+                "employee_id": current_user["id"],
+                "photo_type": "medidor",
+                "period_code": schedule_check["period_code"],
+                "timestamp": {
+                    "$gte": today_start,
+                    "$lt": today_end
+                }
+            })
+            
+            if existing_photo:
+                period_name = "manhã" if schedule_check["period_code"] == "medidor_manha" else "tarde"
+                logger.error(f"❌ Duplicate photo found - blocking submission")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Você já enviou a foto do medidor do período da {period_name} hoje"
+                )
+        else:
+            logger.info(f"✅ Authorization found - skipping duplicate check, allowing multiple photos")
     
     # DELETE OLD PHOTOS before saving new one (only same specific photo)
     # SKIP DELETION FOR TEST USER - allow unlimited photos for testing
