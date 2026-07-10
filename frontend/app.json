@@ -18,6 +18,9 @@
       "permissions": [
         "CAMERA",
         "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
       ]
     },
@@ -29,6 +32,12 @@
       "eas": {
         "projectId": "c78c12db-55a7-4116-9ba2-f98131ef7018"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c78c12db-55a7-4116-9ba2-f98131ef7018"
     }
   }
 }
