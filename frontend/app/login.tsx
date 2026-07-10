@@ -5,100 +5,133 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from './store/authStore';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '@/store/authStore';
 
-export default function Login() {
+export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuthStore();
+
+  const login = useAuthStore((state) => state.login);
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+    if (!username.trim() || !password.trim()) {
+      Alert.alert('Atenção', 'Por favor, preencha todos os campos.');
       return;
     }
 
     setLoading(true);
     try {
-      await login(username, password);
+      await login(username.trim(), password);
     } catch (error: any) {
-      Alert.alert('Erro', error.message);
+      Alert.alert(
+        'Erro ao entrar',
+        error?.message ?? 'Não foi possível realizar o login. Tente novamente.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="camera" size={60} color="#007AFF" />
-            </View>
-            <Text style={styles.title}>Monitor de Fotos</Text>
-            <Text style={styles.subtitle}>Sistema de Controle</Text>
-          </View>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <LinearGradient colors={['#0D1B2A', '#1B3A5C']} style={styles.gradient}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.card}>
+              <View style={styles.logoContainer}>
+                <View style={styles.logoIcon}>
+                  <Ionicons name="shield-checkmark" size={40} color="#FF6D00" />
+                </View>
+              </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Usuário"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+              <Text style={styles.title}>Lacre Monitor</Text>
+              <Text style={styles.subtitle}>Sistema de Monitoramento</Text>
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Senha"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+              <View style={styles.inputContainer}>
                 <Ionicons
-                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  name="person-outline"
                   size={20}
-                  color="#666"
+                  color="#9AA5B1"
+                  style={styles.inputIcon}
                 />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Usuário"
+                  placeholderTextColor="#9AA5B1"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="next"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color="#9AA5B1"
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Senha"
+                  placeholderTextColor="#9AA5B1"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="go"
+                  onSubmitEditing={handleLogin}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  style={styles.eyeButton}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color="#9AA5B1"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Entrar</Text>
+                )}
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.loginButtonText}>Entrar</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -106,9 +139,8 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
-  keyboardView: {
+  gradient: {
     flex: 1,
   },
   scrollContent: {
@@ -116,41 +148,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 32,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#E3F2FD',
-    justifyContent: 'center',
+  logoContainer: {
     alignItems: 'center',
     marginBottom: 24,
   },
+  logoIcon: {
+    backgroundColor: '#FFF3E0',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    color: '#0D1B2A',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666',
-  },
-  form: {
-    gap: 16,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 24,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F7FA',
     borderRadius: 12,
+    height: 52,
     paddingHorizontal: 16,
-    height: 56,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E8ECF0',
+    marginBottom: 16,
   },
   inputIcon: {
     marginRight: 12,
@@ -160,13 +203,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  eyeIcon: {
-    padding: 8,
+  eyeButton: {
+    padding: 4,
   },
   loginButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF6D00',
     borderRadius: 12,
-    height: 56,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
@@ -175,8 +218,8 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   loginButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: 'bold',
   },
 });

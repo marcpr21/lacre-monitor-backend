@@ -1,463 +1,556 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
   Alert,
   Platform,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore, getAuthToken } from './store/authStore';
-import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import axios from 'axios';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
+import { router } from 'expo-router';
+import { useAuthStore } from '@/store/authStore';
 
-const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://lacre-monitor-backend-production.up.railway.app';
+// ============ CONSTANTS ============
+const API_URL =
+  (Constants.expoConfig?.extra as any)?.apiUrl ||
+  'http://192.168.0.100:3000/api';
+
+const LACRE_DAYS = [1, 3, 5]; // Segunda(1), Quarta(3), Sexta(5)
+
+// ============ TYPES ============
+type TaskType = 'lacre' | 'medidor_manha' | 'medidor_tarde';
 
 interface ScheduleItem {
-  type: 'lacre' | 'medidor';
+  id: string;
+  type: TaskType;
   title: string;
   description: string;
-  allowed: boolean;
-  message: string;
-  icon: string;
+  startTime: string;
+  endTime: string;
+  days: number[];
   color: string;
+  icon: keyof typeof Ionicons.glyphMap;
 }
 
-export default function Home() {
-  const { user, logout } = useAuthStore();
-  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+interface ServerSchedule {
+  type: TaskType;
+  startTime: string;
+  endTime: string;
+  days: number[];
+  enabled: boolean;
+}
+
+interface AuthUser {
+  id?: string;
+  username: string;
+  name?: string;
+  role?: string;
+  authorizations?: string[];
+  token?: string;
+}
+
+// ============ NOTIFICATION HANDLER ============
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+// ============ DEFAULT TASKS ============
+const DEFAULT_TASKS: ScheduleItem[] = [
+  {
+    id: 'lacre',
+    type: 'lacre',
+    title: 'Lacre',
+    description: 'Foto do lacre de segurança',
+    startTime: '00:00',
+    endTime: '12:00',
+    days: LACRE_DAYS,
+    color: '#FF6B6B',
+    icon: 'shield-checkmark-outline',
+  },
+  {
+    id: 'medidor_manha',
+    type: 'medidor_manha',
+    title: 'Medidor Manhã',
+    description: 'Leitura do medidor (06:00 - 09:00)',
+    startTime: '06:00',
+    endTime: '09:00',
+    days: [0, 1, 2, 3, 4, 5, 6],
+    color: '#FFA726',
+    icon: 'speedometer-outline',
+  },
+  {
+    id: 'medidor_tarde',
+    type: 'medidor_tarde',
+    title: 'Medidor Tarde',
+    description: 'Leitura do medidor (17:00 - 18:00)',
+    startTime: '17:00',
+    endTime: '18:00',
+    days: [0, 1, 2, 3, 4, 5, 6],
+    color: '#5C6BC0',
+    icon: 'time-outline',
+  },
+];
+
+// ============ HELPER FUNCTIONS ============
+function parseTimeToMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function isTaskAvailable(task: ScheduleItem, user?: AuthUser | null): boolean {
+  if (!user) return false;
+
+  // Usuário "teste" sempre tem acesso
+  if (user.username === 'teste') return true;
+
+  // Autorizações do admin sobrepõem horários
+  if (user.authorizations && user.authorizations.includes(task.type)) {
+    return true;
+  }
+
+  const now = new Date();
+  const currentDay = now.getDay();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  // Verifica dia da semana
+  if (task.days && task.days.length > 0 && !task.days.includes(currentDay)) {
+    return false;
+  }
+
+  // Verifica horário
+  const startMinutes = parseTimeToMinutes(task.startTime);
+  const endMinutes = parseTimeToMinutes(task.endTime);
+
+  return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+}
+
+function getDaysLabel(task: ScheduleItem): string {
+  if (task.type === 'lacre') {
+    return 'Seg, Qua, Sex';
+  }
+  return 'Todos os dias';
+}
+
+// ============ COMPONENT ============
+export default function HomeScreen() {
+  const { user, logout, token } = useAuthStore() as {
+    user: AuthUser | null;
+    logout: () => void;
+    token?: string;
+  };
+
+  const [schedules, setSchedules] = useState<ScheduleItem[]>(DEFAULT_TASKS);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const notificationIds = useRef<string[]>([]);
 
-  useEffect(() => {
-    loadSchedules();
-    setupNotifications();
-  }, []);
-
-  const setupNotifications = async () => {
-    // Skip notifications on web platform
-    if (Platform.OS === 'web') {
-      console.log('Notifications not available on web platform');
-      return;
-    }
-
+  // ============ LOAD SCHEDULES ============
+  const loadSchedules = useCallback(async () => {
     try {
-      // Cancel all existing notifications
-      await Notifications.cancelAllScheduledNotificationsAsync();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios.get(`${API_URL}/schedules`, {
+        headers,
+        timeout: 10000,
+      });
+
+      if (response.data && Array.isArray(response.data)) {
+        const serverSchedules: ServerSchedule[] = response.data;
+        const updatedTasks = DEFAULT_TASKS.map((task) => {
+          const serverSchedule = serverSchedules.find(
+            (s) => s.type === task.type && s.enabled
+          );
+          if (serverSchedule) {
+            return {
+              ...task,
+              startTime: serverSchedule.startTime || task.startTime,
+              endTime: serverSchedule.endTime || task.endTime,
+              days: serverSchedule.days || task.days,
+            };
+          }
+          return task;
+        });
+        setSchedules(updatedTasks);
+      }
     } catch (error) {
-      console.error('Error setting up notifications:', error);
-      return;
+      console.warn('Erro ao carregar schedules do servidor:', error);
+      setSchedules(DEFAULT_TASKS);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  }, [token]);
 
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0=Sunday, 1=Monday
-    const hour = now.getHours();
+  // ============ SETUP NOTIFICATIONS ============
+  const setupNotifications = useCallback(async () => {
+    try {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
 
-    // LACRE NOTIFICATIONS - Every 1 hour on valid days (Monday, Wednesday, Friday)
-    const lacreDays = [1, 3, 5]; // Monday, Wednesday, Friday
-    
-    if (lacreDays.includes(dayOfWeek) && hour < 12) {
-      // Schedule notifications every 1 hour until 12:00
-      for (let h = hour + 1; h <= 12; h++) {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: '🔒 Lembrete: Fotos de Lacre Pendentes',
-            body: `Não esqueça de tirar as fotos dos lacres! Você tem até 12:00 (${12 - h}h restantes)`,
-            sound: true,
-            priority: 'high',
-            vibrate: [0, 250, 250, 250],
-          },
-          trigger: {
-            hour: h,
-            minute: 0,
-            repeats: false,
-          },
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== 'granted') {
+        console.warn('Permissão de notificação não concedida');
+        return;
+      }
+
+      // Configura canal no Android
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'Lacre Monitor',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF6D00',
         });
       }
-    }
 
-    // Schedule for next valid days
-    lacreDays.forEach(async (day) => {
-      // Morning reminders (8, 9, 10, 11 AM)
-      for (let h = 8; h <= 11; h++) {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: '🔒 Lembrete: Fotos de Lacre',
-            body: 'Hora de tirar as fotos dos lacres! Prazo até 12:00',
-            sound: true,
-            priority: 'high',
-            vibrate: [0, 250, 250, 250],
-          },
-          trigger: {
-            weekday: day,
-            hour: h,
-            minute: 0,
-            repeats: true,
-          },
-        });
-      }
-    });
+      // Cancela notificações anteriores
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      notificationIds.current = [];
 
-    // MEDIDOR NOTIFICATIONS - Every 15 minutes during valid periods
-    
-    // Morning period: 06:00-09:00
-    if (hour >= 6 && hour < 9) {
-      // Schedule for remaining time in current period
-      const minutesOptions = [0, 15, 30, 45];
-      const currentMinutes = now.getMinutes();
-      
-      for (let h = hour; h < 9; h++) {
-        for (const minute of minutesOptions) {
-          if (h === hour && minute <= currentMinutes) continue;
-          
-          const remainingTime = (9 - h - 1) * 60 + (60 - minute);
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: '⚡ Lembrete: Foto do Medidor (Manhã)',
-              body: `Tire a foto do medidor agora! Período: 06:00-09:00 (${Math.ceil(remainingTime / 60)}h restantes)`,
-              sound: true,
-              priority: 'max',
-              vibrate: [0, 250, 250, 250],
-            },
-            trigger: {
-              hour: h,
-              minute: minute,
-              repeats: false,
-            },
-          });
+      // Agenda notificações para cada tarefa
+      for (const task of schedules) {
+        const [startH, startM] = task.startTime.split(':').map(Number);
+
+        for (const day of task.days) {
+          try {
+            const notificationId =
+              await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: `📷 ${task.title}`,
+                  body: `Está na hora de tirar a foto: ${task.description}`,
+                  sound: true,
+                  data: { taskType: task.type },
+                },
+                trigger: {
+                  weekday: day + 1,
+                  hour: startH,
+                  minute: startM,
+                  repeats: true,
+                } as any,
+              });
+            notificationIds.current.push(notificationId);
+          } catch (schedError) {
+            console.warn(
+              `Erro ao agendar notificação para ${task.title} (dia ${day}):`,
+              schedError
+            );
+          }
         }
       }
-    }
 
-    // Evening period: 17:00-18:00
-    if (hour >= 17 && hour < 18) {
-      // Schedule for remaining time in current period
-      const minutesOptions = [0, 15, 30, 45];
-      const currentMinutes = now.getMinutes();
-      
-      for (const minute of minutesOptions) {
-        if (minute <= currentMinutes) continue;
-        
-        const remainingTime = 60 - minute;
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: '⚡ Lembrete: Foto do Medidor (Tarde)',
-            body: `Tire a foto do medidor agora! Período: 17:00-18:00 (${remainingTime}min restantes)`,
-            sound: true,
-            priority: 'max',
-            vibrate: [0, 250, 250, 250],
-          },
-          trigger: {
-            hour: 17,
-            minute: minute,
-            repeats: false,
-          },
-        });
-      }
-    }
-
-    // Schedule for future days - Morning period (every 15 min from 6-9 AM)
-    const minutesOptions = [0, 15, 30, 45];
-    for (let h = 6; h < 9; h++) {
-      for (const minute of minutesOptions) {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: '⚡ Foto do Medidor - Manhã',
-            body: 'Lembrete: Tire a foto do medidor agora! (06:00-09:00)',
-            sound: true,
-            priority: 'max',
-            vibrate: [0, 250, 250, 250],
-          },
-          trigger: {
-            hour: h,
-            minute: minute,
-            repeats: true,
-          },
-        });
-      }
-    }
-
-    // Schedule for future days - Evening period (every 15 min from 5-6 PM)
-    for (const minute of minutesOptions) {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '⚡ Foto do Medidor - Tarde',
-          body: 'Lembrete: Tire a foto do medidor agora! (17:00-18:00)',
-          sound: true,
-          priority: 'max',
-          vibrate: [0, 250, 250, 250],
-        },
-        trigger: {
-          hour: 17,
-          minute: minute,
-          repeats: true,
-        },
-      });
-    }
-
-    console.log('✅ Notificações agendadas com sucesso');
-  };
-
-  const loadSchedules = async () => {
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0=Sunday, 1=Monday
-    const hour = now.getHours();
-
-    const scheduleData: ScheduleItem[] = [];
-
-    // CHECK IF USER IS "teste" - bypass all validations
-    const isTestUser = user?.username?.toLowerCase() === 'teste';
-
-    // Fetch authorizations
-    let authorizations: any = {};
-    try {
-      const token = await getAuthToken();
-      const response = await axios.get(`${API_URL}/api/my-authorizations`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      authorizations = response.data.authorizations || {};
+      console.log(
+        `✅ ${notificationIds.current.length} notificações agendadas`
+      );
     } catch (error) {
-      console.log('No authorizations found');
+      console.error('Erro ao configurar notificações:', error);
     }
+  }, [schedules]);
 
-    // Check Lacre schedule
-    const lacreDays = [1, 3, 5]; // Monday, Wednesday, Friday
-    const isLacreDay = lacreDays.includes(dayOfWeek);
-    const isBeforeNoon = hour < 12;
-    const hasLacreAuth = authorizations.lacre?.authorized;
+  // ============ EFFECT: INITIAL LOAD ============
+  useEffect(() => {
+    (async () => {
+      await loadSchedules();
+    })();
+  }, [loadSchedules]);
 
-    scheduleData.push({
-      type: 'lacre',
-      title: 'Foto de Lacre',
-      description: hasLacreAuth 
-        ? `✅ Autorizado até ${new Date(authorizations.lacre.expires_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
-        : isTestUser ? 'Teste - Horário livre' : 'Segunda, Quarta e Sexta até 12:00',
-      allowed: isTestUser || hasLacreAuth || (isLacreDay && isBeforeNoon),
-      message: hasLacreAuth
-        ? 'Autorizado pelo administrador!'
-        : isTestUser 
-        ? 'Usuário de teste - sempre disponível!'
-        : isLacreDay
-        ? isBeforeNoon
-          ? 'Disponível agora!'
-          : 'Período encerrado (até 12:00)'
-        : 'Disponível apenas em Seg/Qua/Sex',
-      icon: 'lock-closed',
-      color: '#FF6B6B',
-    });
-
-    // Check Medidor schedule - Morning and Afternoon separately
-    const isMorning = hour >= 6 && hour < 9;
-    const isEvening = hour >= 17 && hour < 18;
-    const hasMedidorManhaAuth = authorizations.medidor_manha?.authorized;
-    const hasMedidorTardeAuth = authorizations.medidor_tarde?.authorized;
-
-    // Morning medidor
-    scheduleData.push({
-      type: 'medidor',
-      title: 'Medidor - Manhã',
-      description: hasMedidorManhaAuth
-        ? `✅ Autorizado até ${new Date(authorizations.medidor_manha.expires_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
-        : isTestUser ? 'Teste - Horário livre' : '06:00-09:00',
-      allowed: isTestUser || hasMedidorManhaAuth || isMorning,
-      message: hasMedidorManhaAuth
-        ? 'Autorizado pelo administrador!'
-        : isTestUser 
-        ? 'Usuário de teste - sempre disponível!'
-        : isMorning ? 'Disponível agora!' : 'Período: 06:00-09:00',
-      icon: 'sunny',
-      color: '#FFA726',
-    });
-
-    // Afternoon medidor
-    scheduleData.push({
-      type: 'medidor',
-      title: 'Medidor - Tarde',
-      description: hasMedidorTardeAuth
-        ? `✅ Autorizado até ${new Date(authorizations.medidor_tarde.expires_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
-        : isTestUser ? 'Teste - Horário livre' : '17:00-18:00',
-      allowed: isTestUser || hasMedidorTardeAuth || isEvening,
-      message: hasMedidorTardeAuth
-        ? 'Autorizado pelo administrador!'
-        : isTestUser 
-        ? 'Usuário de teste - sempre disponível!'
-        : isEvening ? 'Disponível agora!' : 'Período: 17:00-18:00',
-      icon: 'moon',
-      color: '#5C6BC0',
-    });
-
-    // Filter schedules based on user's required_photos
-    let filteredSchedules = scheduleData;
-    const requiredPhotos = user?.required_photos || 'both';
-    
-    console.log('🔍 DEBUG - User:', user?.username);
-    console.log('🔍 DEBUG - Required Photos:', requiredPhotos);
-    console.log('🔍 DEBUG - Total schedules:', scheduleData.length);
-    
-    if (requiredPhotos === 'lacre') {
-      // Show only lacre photos
-      filteredSchedules = scheduleData.filter(s => s.type === 'lacre');
-      console.log('✅ Filtering to LACRE only - Result:', filteredSchedules.length);
-    } else if (requiredPhotos === 'medidor') {
-      // Show only medidor photos
-      filteredSchedules = scheduleData.filter(s => s.type === 'medidor');
-      console.log('✅ Filtering to MEDIDOR only - Result:', filteredSchedules.length);
-    } else {
-      console.log('✅ Showing ALL (both) - Result:', filteredSchedules.length);
+  // ============ EFFECT: NOTIFICATIONS ============
+  useEffect(() => {
+    if (!loading) {
+      setupNotifications();
     }
-    // If 'both' or undefined, show all (no filter needed)
+  }, [loading, setupNotifications]);
 
-    setSchedules(filteredSchedules);
-  };
+  // ============ HANDLE TAKE PHOTO ============
+  const handleTakePhoto = useCallback(
+    (task: ScheduleItem) => {
+      if (!isTaskAvailable(task, user)) {
+        Alert.alert(
+          'Indisponível',
+          `A tarefa "${task.title}" não está disponível no momento.\n\nHorário permitido: ${task.startTime} - ${task.endTime}`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
 
-  const onRefresh = async () => {
+      router.push({
+        pathname: '/camera',
+        params: {
+          taskType: task.type,
+          taskTitle: task.title,
+        },
+      });
+    },
+    [user]
+  );
+
+  // ============ ON REFRESH ============
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadSchedules();
-    setRefreshing(false);
-  };
+  }, [loadSchedules]);
 
-  const handleTakePhoto = (photoType: 'lacre' | 'medidor', allowed: boolean) => {
-    if (!allowed) {
-      Alert.alert(
-        'Fora do horário',
-        photoType === 'lacre'
-          ? 'Fotos de lacre só podem ser tiradas em Segunda, Quarta e Sexta até 12:00'
-          : 'Fotos de medidor devem ser tiradas entre 06:00-09:00 ou 17:00-18:00'
-      );
-      return;
-    }
-
-    router.push(`/camera?type=${photoType}`);
-  };
-
-  const handleLogout = () => {
-    Alert.alert('Sair', 'Deseja realmente sair?', [
+  // ============ HANDLE LOGOUT ============
+  const handleLogout = useCallback(() => {
+    Alert.alert('Sair', 'Deseja realmente sair da conta?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: logout },
+      {
+        text: 'Sair',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await Notifications.cancelAllScheduledNotificationsAsync();
+          } catch (e) {
+            // ignore
+          }
+          logout();
+          router.replace('/login');
+        },
+      },
     ]);
-  };
+  }, [logout]);
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Olá,</Text>
-          <Text style={styles.userName}>{user?.name}</Text>
+  // ============ RENDER CARD ============
+  const renderCard = (task: ScheduleItem) => {
+    const available = isTaskAvailable(task, user);
+
+    return (
+      <View key={task.id} style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={[styles.iconCircle, { backgroundColor: task.color }]}>
+            <Ionicons name={task.icon} size={28} color="#FFFFFF" />
+          </View>
+          <View style={styles.cardTitleContainer}>
+            <Text style={styles.cardTitle}>{task.title}</Text>
+            <Text style={styles.cardSubtitle}>{task.description}</Text>
+          </View>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
-        </TouchableOpacity>
-      </View>
 
-      <ScrollView
-        style={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <Text style={styles.sectionTitle}>Tarefas de Hoje</Text>
-
-        {schedules.map((schedule, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.scheduleCard,
-              !schedule.allowed && styles.scheduleCardDisabled,
-            ]}
-            onPress={() => handleTakePhoto(schedule.type, schedule.allowed)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.iconCircle, { backgroundColor: schedule.color + '20' }]}>
-              <Ionicons name={schedule.icon as any} size={32} color={schedule.color} />
-            </View>
-
-            <View style={styles.scheduleInfo}>
-              <Text style={styles.scheduleTitle}>{schedule.title}</Text>
-              <Text style={styles.scheduleDescription}>{schedule.description}</Text>
-              <View style={styles.statusContainer}>
-                <View
-                  style={[
-                    styles.statusDot,
-                    { backgroundColor: schedule.allowed ? '#4CAF50' : '#FFA726' },
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.statusText,
-                    { color: schedule.allowed ? '#4CAF50' : '#FFA726' },
-                  ]}
-                >
-                  {schedule.message}
-                </Text>
-              </View>
-            </View>
-
-            <Ionicons
-              name="camera"
-              size={24}
-              color={schedule.allowed ? schedule.color : '#CCCCCC'}
-            />
-          </TouchableOpacity>
-        ))}
-
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={24} color="#007AFF" />
-          <View style={styles.infoContent}>
-            <Text style={styles.infoTitle}>Importante</Text>
-            <Text style={styles.infoText}>
-              As fotos serão tiradas diretamente pela câmera e não serão salvas no seu celular.
-              Você receberá lembretes nos horários corretos.
+        <View style={styles.cardTimeInfo}>
+          <View style={styles.timeRow}>
+            <Ionicons name="time-outline" size={16} color="#666" />
+            <Text style={styles.cardTimeText}>
+              Horário: {task.startTime} - {task.endTime}
             </Text>
           </View>
+          <View style={styles.timeRow}>
+            <Ionicons name="calendar-outline" size={16} color="#666" />
+            <Text style={styles.cardTimeText}>{getDaysLabel(task)}</Text>
+          </View>
+        </View>
+
+        <View style={styles.statusRow}>
+          <View
+            style={[
+              styles.statusDot,
+              { backgroundColor: available ? '#22C55E' : '#CCC' },
+            ]}
+          />
+          <Text
+            style={
+              available ? styles.statusAvailable : styles.statusUnavailable
+            }
+          >
+            {available ? 'Disponível agora!' : 'Indisponível'}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            !available && styles.actionButtonDisabled,
+          ]}
+          onPress={() => handleTakePhoto(task)}
+          disabled={!available}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name="camera-outline"
+            size={20}
+            color="#FFFFFF"
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.actionButtonText}>Tirar Foto</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  // ============ RENDER LOADING ============
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer} edges={['top']}>
+        <StatusBar barStyle="light-content" backgroundColor="#0D1B2A" />
+        <View style={styles.header}>
+          <View style={styles.headerGradient} />
+          <Text style={styles.headerTitle}>Lacre Monitor</Text>
+        </View>
+        <View style={styles.loadingContent}>
+          <ActivityIndicator size="large" color="#FF6D00" />
+          <Text style={styles.loadingText}>Carregando tarefas...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ============ RENDER MAIN ============
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0D1B2A" />
+
+      {/* HEADER */}
+      <View style={styles.header}>
+        <View style={styles.headerGradient} />
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>Lacre Monitor</Text>
+            <Text style={styles.headerSubtitle}>
+              {user?.name || user?.username || 'Funcionário'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* SCROLL */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#FF6D00']}
+            tintColor="#FF6D00"
+          />
+        }
+      >
+        <Text style={styles.sectionTitle}>Tarefas Disponíveis</Text>
+        <Text style={styles.sectionSubtitle}>
+          Puxe para atualizar os horários
+        </Text>
+
+        {schedules.map((task) => renderCard(task))}
+
+        <View style={styles.footer}>
+          <Ionicons name="information-circle-outline" size={14} color="#999" />
+          <Text style={styles.footerText}>
+            {user?.username === 'teste'
+              ? 'Modo teste: todas as tarefas disponíveis'
+              : 'Verifique os horários permitidos'}
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// ============ STYLES ============
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F5F7FA',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#F5F7FA',
+  },
+  loadingContent: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
-  greeting: {
-    fontSize: 16,
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
     color: '#666',
   },
-  userName: {
-    fontSize: 24,
+  header: {
+    backgroundColor: '#0D1B2A',
+    paddingTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#1B263B',
+    opacity: 0.5,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+  },
+  headerSubtitle: {
+    color: '#FFFFFF',
+    opacity: 0.7,
+    fontSize: 14,
+    marginTop: 2,
   },
   logoutButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 109, 0, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  content: {
+  scrollView: {
     flex: 1,
-    padding: 24,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#0D1B2A',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: '#999',
     marginBottom: 16,
   },
-  scheduleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+  card: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
@@ -465,67 +558,98 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 4,
   },
-  scheduleCardDisabled: {
-    opacity: 0.6,
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  scheduleInfo: {
-    flex: 1,
-  },
-  scheduleTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  scheduleDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  statusContainer: {
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardTitleContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0D1B2A',
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    color: '#999',
+    marginTop: 2,
+  },
+  cardTimeInfo: {
+    backgroundColor: '#F5F7FA',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  cardTimeText: {
+    fontSize: 13,
+    color: '#666',
+    marginLeft: 6,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 6,
+    marginRight: 8,
   },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: '#E3F2FD',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
-  },
-  infoContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  infoTitle: {
-    fontSize: 16,
+  statusAvailable: {
+    color: '#22C55E',
     fontWeight: '600',
-    color: '#007AFF',
-    marginBottom: 4,
-  },
-  infoText: {
     fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+  },
+  statusUnavailable: {
+    color: '#999',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  actionButton: {
+    backgroundColor: '#FF6D00',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  actionButtonDisabled: {
+    backgroundColor: '#E0E0E0',
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#999',
+    marginLeft: 6,
+    textAlign: 'center',
   },
 });
