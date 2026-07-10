@@ -2,11 +2,17 @@ module.exports = function(api) {
   api.cache(true);
   return {
     presets: [
-      ['babel-preset-expo', { 
-        reanimated: false,  // Disable auto-loading reanimated plugin
-        worklets: false     // Disable auto-loading worklets plugin
+      ['babel-preset-expo', {
+        reanimated: false,
+        worklets: false
       }]
     ],
-    plugins: []
+    plugins: [
+      ['module-resolver', {
+        alias: {
+          '@': './'
+        }
+      }]
+    ]
   };
 };
